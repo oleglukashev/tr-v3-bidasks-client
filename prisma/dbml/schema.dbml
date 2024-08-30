@@ -1,0 +1,109 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table trading_services {
+  id Int [pk, increment]
+  name String [unique, not null]
+  pairs pairs [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table pairs {
+  id Int [pk, increment]
+  name String [unique, not null]
+  symbol String [unique, not null]
+  precision Int [not null, default: 2]
+  startTs BigInt [not null, default: 0]
+  currentTs BigInt [not null, default: 0]
+  activated Boolean [not null, default: true]
+  klines klines [not null]
+  strategySessions strategy_sessions [not null]
+  tradingServiceId Int [not null]
+  tradingService trading_services [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table klines {
+  id String [pk]
+  open String [not null]
+  close String [not null]
+  low String [not null]
+  high String [not null]
+  volume String [not null]
+  ts BigInt [not null]
+  interval Int [not null, default: 1]
+  pairId Int [not null]
+  pair pairs [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (ts, pairId, interval) [unique]
+  }
+}
+
+Table balances {
+  id Int [pk, increment]
+  symbol String [unique, not null]
+  value String [not null, default: '0']
+  trxs balance_trxs [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table balance_trxs {
+  id Int [pk, increment]
+  balanceBefore String [not null, default: '0']
+  balanceAfter String [not null, default: '0']
+  status String [not null, default: 'pending']
+  side String [not null]
+  type String [not null]
+  quantity String [not null]
+  price String [not null]
+  balanceId Int [unique, not null]
+  balance balances [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table strategies {
+  id Int [pk, increment]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table strategy_sessions {
+  id Int [pk, increment]
+  status String [not null, default: 'waiting']
+  data Json [not null, default: '{}']
+  pairId Int [not null]
+  pair pairs [not null]
+  trxs strategy_session_trxs [not null]
+  startTs BigInt [not null]
+  finishTs BigInt
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table strategy_session_trxs {
+  id Int [pk, increment]
+  status String [not null, default: 'pending']
+  value String [not null]
+  side String [not null]
+  type String [not null]
+  quantity String [not null]
+  price String [not null]
+  strategySessionId Int [not null]
+  strategySession strategy_sessions [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Ref: pairs.tradingServiceId > trading_services.id [delete: Restrict]
+
+Ref: klines.pairId > pairs.id [delete: Restrict]
+
+Ref: balance_trxs.balanceId > balances.id [delete: Restrict]
+
+Ref: strategy_sessions.pairId > pairs.id [delete: Restrict]
+
+Ref: strategy_session_trxs.strategySessionId > strategy_sessions.id [delete: Restrict]
