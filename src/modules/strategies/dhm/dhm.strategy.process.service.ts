@@ -35,6 +35,7 @@ export class DhmStrategyProcessService {
 
     for (const session of sessions) {
       const tickerPrice = await this.redis.get(session.pair.symbol);
+      console.log(`${session.pair.symbol}: ${tickerPrice}`);
 
       // if (!session.data?.actions) {
       //   session.data.actions = {
@@ -60,6 +61,7 @@ export class DhmStrategyProcessService {
             }).divide(Number(this.getFib(session, '0.5'))),
             this.getFib(session, '0.5'),
           );
+          console.log(`add buy 0.5`);
         }
 
         if (!session.data.orders.buy?.['0.618']?.orderId) {
@@ -70,6 +72,7 @@ export class DhmStrategyProcessService {
             }).divide(Number(this.getFib(session, '0.618'))),
             this.getFib(session, '0.618'),
           );
+          console.log(`add buy 0.618`);
         }
 
         if (!session.data.orders.buy?.['1.618']?.orderId) {
@@ -80,6 +83,7 @@ export class DhmStrategyProcessService {
             }).divide(Number(this.getFib(session, '1.618'))),
             this.getFib(session, '1.618'),
           );
+          console.log(`add buy 1.618`);
         }
 
         if (!session.data.orders.buy?.['2.414']?.orderId) {
@@ -90,6 +94,7 @@ export class DhmStrategyProcessService {
             }).divide(Number(this.getFib(session, '2.414'))),
             this.getFib(session, '2.414'),
           );
+          console.log(`add buy 2.414`);
         }
       }
 
@@ -97,6 +102,7 @@ export class DhmStrategyProcessService {
         //await this.setHigh(session, session.data.kline2, allowMakeTrxs);
         if (tickerPrice > session.data.high) {
           session.data.high = tickerPrice;
+          console.log(`set new high`);
 
           if (allowMakeTrxs) {
             // cancel previous orders
@@ -104,21 +110,25 @@ export class DhmStrategyProcessService {
               await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['0.5'].orderId,
               });
+              console.log(`cancel order 0.5`);
             }
             if (session.data.orders.buy?.['0.618']?.orderId) {
               await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['0.618'].orderId,
               });
+              console.log(`cancel order 0.618`);
             }
             if (session.data.orders.buy?.['1.618']?.orderId) {
               await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['1.618'].orderId,
               });
+              console.log(`cancel order 1.618`);
             }
             if (session.data.orders.buy?.['2.414']?.orderId) {
               await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['2.414'].orderId,
               });
+              console.log(`cancel order 2.414`);
             }
 
             // clear orders data
@@ -132,6 +142,7 @@ export class DhmStrategyProcessService {
               }).divide(Number(this.getFib(session, '0.5'))),
               this.getFib(session, '0.5'),
             );
+            console.log(`add buy 0.5`);
 
             // create buy 0.618
             session.data.orders.buy['0.618'] = await this.buy(
@@ -141,6 +152,7 @@ export class DhmStrategyProcessService {
               }).divide(Number(this.getFib(session, '0.618'))),
               this.getFib(session, '0.618'),
             );
+            console.log(`add buy 0.618`);
 
             // create buy 1.618
             session.data.orders.buy['1.618'] = await this.buy(
@@ -150,6 +162,7 @@ export class DhmStrategyProcessService {
               }).divide(Number(this.getFib(session, '1.618'))),
               this.getFib(session, '1.618'),
             );
+            console.log(`add buy 1.618`);
 
             // create buy 2.414
             session.data.orders.buy['2.414'] = await this.buy(
@@ -159,6 +172,7 @@ export class DhmStrategyProcessService {
               }).divide(Number(this.getFib(session, '2.414'))),
               this.getFib(session, '2.414'),
             );
+            console.log(`add buy 2.414`);
           }
         }
       }
@@ -166,11 +180,11 @@ export class DhmStrategyProcessService {
       // if after we have 30 klines and status if waiting or triggered then finish this sessions
       if (nowTs() - session.data.kline2.ts > this.FINISH_IN_MS) {
         await this.checkFinishByLength(session);
+        console.log(`check finish`);
       }
 
       if (allowMakeTrxs) {
         //if (this.session.status === 'waiting') {
-        const tickerPrice = await this.redis.get(session.pair.symbol);
         //const ts = nowTs();
 
         // buy
@@ -200,6 +214,7 @@ export class DhmStrategyProcessService {
               session.data.orders.buy['0.5'].origQty,
               this.getFib(session, '0.382'),
             );
+            console.log(`add sell 0.5`);
           }
         }
 
@@ -218,6 +233,7 @@ export class DhmStrategyProcessService {
               session.data.orders.buy['0.618'].origQty,
               this.getFib(session, '0.5'),
             );
+            console.log(`add sell 0.618`);
           }
         }
 
@@ -236,6 +252,7 @@ export class DhmStrategyProcessService {
               session.data.orders.buy['1.618'].origQty,
               this.getFib(session, '0.618'),
             );
+            console.log(`add sell 1.618`);
           }
         }
 
@@ -254,6 +271,7 @@ export class DhmStrategyProcessService {
               session.data.orders.buy['2.414'].origQty,
               this.getFib(session, '1.618'),
             );
+            console.log(`add sell 2.414`);
           }
         }
 
@@ -309,6 +327,7 @@ export class DhmStrategyProcessService {
         status: session.status,
         data: session.data,
       });
+      console.log('update');
     }
   }
 
