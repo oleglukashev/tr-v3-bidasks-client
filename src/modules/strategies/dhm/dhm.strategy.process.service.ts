@@ -36,18 +36,61 @@ export class DhmStrategyProcessService {
     for (const session of sessions) {
       const tickerPrice = await this.redis.get(session.pair.symbol);
 
-      if (!session.data?.actions) {
-        session.data.actions = {
-          buy: {},
-          sell: {},
-        };
-      }
+      // if (!session.data?.actions) {
+      //   session.data.actions = {
+      //     buy: {},
+      //     sell: {},
+      //   };
+      // }
 
       if (!session.data?.orders) {
         session.data.orders = {
           buy: {},
           sell: {},
         };
+      }
+
+      if (allowMakeTrxs) {
+        //set orders
+        if (!session.data.orders.buy?.['0.5']?.orderId) {
+          session.data.orders.buy['0.5'] = await this.buy(
+            session.pair.symbol,
+            currencyjs(this.ORDER_VALUE, {
+              precision: session.pair.precision,
+            }).divide(Number(this.getFib(session, '0.5'))),
+            this.getFib(session, '0.5'),
+          );
+        }
+
+        if (!session.data.orders.buy?.['0.618']?.orderId) {
+          session.data.orders.buy['0.618'] = await this.buy(
+            session.pair.symbol,
+            currencyjs(this.ORDER_VALUE, {
+              precision: session.pair.precision,
+            }).divide(Number(this.getFib(session, '0.618'))),
+            this.getFib(session, '0.618'),
+          );
+        }
+
+        if (!session.data.orders.buy?.['1.618']?.orderId) {
+          session.data.orders.buy['1.618'] = await this.buy(
+            session.pair.symbol,
+            currencyjs(this.ORDER_VALUE, {
+              precision: session.pair.precision,
+            }).divide(Number(this.getFib(session, '1.618'))),
+            this.getFib(session, '1.618'),
+          );
+        }
+
+        if (!session.data.orders.buy?.['2.414']?.orderId) {
+          session.data.orders.buy['2.414'] = await this.buy(
+            session.pair.symbol,
+            currencyjs(this.ORDER_VALUE, {
+              precision: session.pair.precision,
+            }).divide(Number(this.getFib(session, '2.414'))),
+            this.getFib(session, '2.414'),
+          );
+        }
       }
 
       if (session.status === 'waiting') {
@@ -58,22 +101,22 @@ export class DhmStrategyProcessService {
           if (allowMakeTrxs) {
             // cancel previous orders
             if (session.data.orders.buy?.['0.5']?.orderId) {
-              await this.mexcService.cancelOrder(session.pair.symbol, {
+              await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['0.5'].orderId,
               });
             }
             if (session.data.orders.buy?.['0.618']?.orderId) {
-              await this.mexcService.cancelOrder(session.pair.symbol, {
+              await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['0.618'].orderId,
               });
             }
             if (session.data.orders.buy?.['1.618']?.orderId) {
-              await this.mexcService.cancelOrder(session.pair.symbol, {
+              await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['1.618'].orderId,
               });
             }
             if (session.data.orders.buy?.['2.414']?.orderId) {
-              await this.mexcService.cancelOrder(session.pair.symbol, {
+              await this.cancel(session.pair.symbol, {
                 orderId: session.data.orders.buy['2.414'].orderId,
               });
             }
@@ -128,16 +171,24 @@ export class DhmStrategyProcessService {
       if (allowMakeTrxs) {
         //if (this.session.status === 'waiting') {
         const tickerPrice = await this.redis.get(session.pair.symbol);
-        const ts = nowTs();
+        //const ts = nowTs();
 
         // buy
-        if (this.getFib(session, '0.382') >= tickerPrice) {
-          await this.addBuyAction(session, tickerPrice, '0.382', ts, '0.382');
-        }
+        // if (
+        //   this.getFib(session, '0.382') >= tickerPrice &&
+        //   !session.data.actions.buy['0.382']
+        // ) {
+        //   await this.addBuyAction(session, tickerPrice, '0.382', ts, '0.382');
+        // }
 
         if (this.getFib(session, '0.5') >= tickerPrice) {
-          await this.addBuyAction(session, tickerPrice, '0.5', ts, '0.5');
-          session.status = 'triggered';
+          // if (!session.data.actions.buy['0.5']) {
+          //   await this.addBuyAction(session, tickerPrice, '0.5', ts, '0.5');
+          //   session.status = 'triggered';
+          // }
+          if (session.status === 'waiting') {
+            session.status = 'triggered';
+          }
 
           // create sell for 0.5
           if (
@@ -153,8 +204,9 @@ export class DhmStrategyProcessService {
         }
 
         if (this.getFib(session, '0.618') >= tickerPrice) {
-          await this.addBuyAction(session, tickerPrice, '0.618', ts, '0.618');
-          session.status = 'triggered';
+          if (session.status === 'waiting') {
+            session.status = 'triggered';
+          }
 
           // create sell for 0.618
           if (
@@ -170,8 +222,9 @@ export class DhmStrategyProcessService {
         }
 
         if (this.getFib(session, '1.618') >= tickerPrice) {
-          await this.addBuyAction(session, tickerPrice, '1.618', ts, '1.618');
-          session.status = 'triggered';
+          if (session.status === 'waiting') {
+            session.status = 'triggered';
+          }
 
           // create sell for 1.618
           if (
@@ -187,8 +240,9 @@ export class DhmStrategyProcessService {
         }
 
         if (this.getFib(session, '2.414') >= tickerPrice) {
-          await this.addBuyAction(session, tickerPrice, '2.414', ts, '2.414');
-          session.status = 'triggered';
+          if (session.status === 'waiting') {
+            session.status = 'triggered';
+          }
 
           // create sell for 2.414
           if (
@@ -205,18 +259,50 @@ export class DhmStrategyProcessService {
 
         // sell
         if (this.getFib(session, '0.382') < tickerPrice) {
-          await this.addSellAction(session, tickerPrice, '0.382', ts, '0.5');
-          await this.addSellAction(session, tickerPrice, '0.382', ts, '2.414');
-          await this.addSellAction(session, tickerPrice, '0.382', ts, '0.618');
+          // if (
+          //   session.data.actions.buy['0.5'] &&
+          //   !session.data.actions.sell['0.5']
+          // ) {
+          //   await this.addSellAction(session, tickerPrice, '0.382', ts, '0.5');
+          // }
+          // if (session.data.actions.buy['2.414'] && !session.data.actions.sell['2.414']) {
+          //   await this.addSellAction(
+          //     session,
+          //     tickerPrice,
+          //     '0.382',
+          //     ts,
+          //     '2.414',
+          //   );
+          //   console.log('add sell action ');
+          // }
+          // if (session.data.actions.buy['2.414'] && !session.data.actions.sell['0.618']) {
+          //   await this.addSellAction(
+          //     session,
+          //     tickerPrice,
+          //     '0.382',
+          //     ts,
+          //     '0.618',
+          //   );
+          // }
         }
 
-        if (this.getFib(session, '0.5') < tickerPrice) {
-          await this.addSellAction(session, tickerPrice, '0.5', ts, '1.618');
-        }
+        // if (this.getFib(session, '0.5') < tickerPrice) {
+        //   if (!session.data.orders.sell['1.618']) {
+        //     await this.addSellAction(session, tickerPrice, '0.5', ts, '1.618');
+        //   }
+        // }
 
-        if (this.getFib(session, '0.236') < tickerPrice) {
-          await this.addSellAction(session, tickerPrice, '0.236', ts, '0.382');
-        }
+        // if (this.getFib(session, '0.236') < tickerPrice) {
+        //   if (!session.data.orders.sell['0.382']) {
+        //     await this.addSellAction(
+        //       session,
+        //       tickerPrice,
+        //       '0.236',
+        //       ts,
+        //       '0.382',
+        //     );
+        //   }
+        // }
       }
 
       await this.strategySessionsEntityService.baseUpdate(session.id, {
@@ -514,6 +600,17 @@ export class DhmStrategyProcessService {
         quantity,
         price,
       });
+      return res;
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
+  }
+
+  private async cancel(symbol, options) {
+    try {
+      // await here because neet to catch error
+      const res = await this.mexcService.cancelOrder(symbol, options);
       return res;
     } catch (e) {
       console.log(e);
