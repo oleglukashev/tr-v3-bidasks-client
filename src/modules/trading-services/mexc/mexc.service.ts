@@ -56,4 +56,8 @@ export class MexcService {
   async cancelOpenOrders(symbol: string) {
     return this.client.cancelOpenOrders(symbol);
   }
+
+  async accountInfo() {
+    return this.client.accountInfo();
+  }
 }

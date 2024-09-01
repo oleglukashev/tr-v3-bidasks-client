@@ -32,10 +32,30 @@ export class DhmStrategyProcessService {
 
   private async check(allowMakeTrxs = true) {
     const sessions = await this.activeSessions();
+    let account;
+    try {
+      account = await this.mexcService.accountInfo();
+    } catch(e) {
+      console.log(e);
+      return;
+    }
+    const balances = {};
+
+    if (account?.balances?.length) {
+      for (const item of account.balances) {
+        balances[item.asset] = item.free;
+      }
+    }
 
     for (const session of sessions) {
       const tickerPrice = await this.redis.get(session.pair.symbol);
-      console.log(`${session.pair.symbol}: ${tickerPrice}`);
+      const usdAssetName = session.pair.symbol.includes('USDT')
+        ? 'USDT'
+        : 'USDC';
+
+      console.log(usdAssetName);
+      console.log(balances?.[usdAssetName]);
+      console.log(this.ORDER_VALUE.toString());
 
       if (!session.data?.orders) {
         session.data.orders = {
@@ -46,22 +66,25 @@ export class DhmStrategyProcessService {
 
       if (allowMakeTrxs) {
         //set orders
-        if (!session.data.orders.buy?.['0.5']?.orderId) {
+        if (
+          !session.data.orders.buy?.['0.5']?.orderId &&
+          balances?.[usdAssetName] >= this.ORDER_VALUE.toString()
+        ) {
           session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
           console.log(`add buy 0.5`);
         }
 
-        // if (!session.data.orders.buy?.['0.618']?.orderId) {
+        // if (!session.data.orders.buy?.['0.618']?.orderId && balances?.[usdAssetName] >= this.ORDER_VALUE.toString()) {
         //   session.data.orders.buy['0.618'] = await this.buy(session, '0.618');
         //   console.log(`add buy 0.618`);
         // }
         //
-        // if (!session.data.orders.buy?.['1.618']?.orderId) {
+        // if (!session.data.orders.buy?.['1.618']?.orderId && balances?.[usdAssetName] >= this.ORDER_VALUE.toString()) {
         //   session.data.orders.buy['1.618'] = await this.buy(session, '1.618');
         //   console.log(`add buy 1.618`);
         // }
         //
-        // if (!session.data.orders.buy?.['2.414']?.orderId) {
+        // if (!session.data.orders.buy?.['2.414']?.orderId && balances?.[usdAssetName] >= this.ORDER_VALUE.toString()) {
         //   session.data.orders.buy['2.414'] = await this.buy(session, '2.414');
         //   console.log(`add buy 2.414`);
         // }
@@ -81,43 +104,51 @@ export class DhmStrategyProcessService {
               });
               console.log(`cancel order 0.5`);
             }
-            if (session.data.orders.buy?.['0.618']?.orderId) {
-              await this.cancel(session.pair.symbol, {
-                orderId: session.data.orders.buy['0.618'].orderId,
-              });
-              console.log(`cancel order 0.618`);
-            }
-            if (session.data.orders.buy?.['1.618']?.orderId) {
-              await this.cancel(session.pair.symbol, {
-                orderId: session.data.orders.buy['1.618'].orderId,
-              });
-              console.log(`cancel order 1.618`);
-            }
-            if (session.data.orders.buy?.['2.414']?.orderId) {
-              await this.cancel(session.pair.symbol, {
-                orderId: session.data.orders.buy['2.414'].orderId,
-              });
-              console.log(`cancel order 2.414`);
-            }
+            // if (session.data.orders.buy?.['0.618']?.orderId) {
+            //   await this.cancel(session.pair.symbol, {
+            //     orderId: session.data.orders.buy['0.618'].orderId,
+            //   });
+            //   console.log(`cancel order 0.618`);
+            // }
+            // if (session.data.orders.buy?.['1.618']?.orderId) {
+            //   await this.cancel(session.pair.symbol, {
+            //     orderId: session.data.orders.buy['1.618'].orderId,
+            //   });
+            //   console.log(`cancel order 1.618`);
+            // }
+            // if (session.data.orders.buy?.['2.414']?.orderId) {
+            //   await this.cancel(session.pair.symbol, {
+            //     orderId: session.data.orders.buy['2.414'].orderId,
+            //   });
+            //   console.log(`cancel order 2.414`);
+            // }
 
             // clear orders data
             session.data.orders.buy = {};
 
             // create buy 0.5
-            session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
-            console.log(`add buy 0.5`);
+            if (balances?.[usdAssetName] >= this.ORDER_VALUE.toString()) {
+              session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
+              console.log(`add buy 0.5`);
+            }
 
-            // create buy 0.618
-            session.data.orders.buy['0.618'] = await this.buy(session, '0.618');
-            console.log(`add buy 0.618`);
-
-            // create buy 1.618
-            session.data.orders.buy['1.618'] = await this.buy(session, '1.618');
-            console.log(`add buy 1.618`);
-
-            // create buy 2.414
-            session.data.orders.buy['2.414'] = await this.buy(session, '2.414');
-            console.log(`add buy 2.414`);
+            // // create buy 0.618
+            // if (this.getFib(session, '0.5') >= tickerPrice && balances?.[usdAssetName] >= this.ORDER_VALUE.toString()) {
+            //   session.data.orders.buy['0.618'] = await this.buy(session, '0.618');
+            //   console.log(`add buy 0.618`);
+            // }
+            //
+            // // create buy 1.618
+            // if (this.getFib(session, '0.618') >= tickerPrice && balances?.[usdAssetName] >= this.ORDER_VALUE.toString()) {
+            //   session.data.orders.buy['1.618'] = await this.buy(session, '1.618');
+            //   console.log(`add buy 1.618`);
+            // }
+            //
+            // // create buy 2.414
+            // if (this.getFib(session, '1.618') >= tickerPrice && balances?.[usdAssetName] >= this.ORDER_VALUE.toString()) {
+            //   session.data.orders.buy['2.414'] = await this.buy(session, '2.414');
+            //   console.log(`add buy 2.414`);
+            // }
           }
         }
       }
@@ -145,7 +176,10 @@ export class DhmStrategyProcessService {
           //   await this.addBuyAction(session, tickerPrice, '0.5', ts, '0.5');
           //   session.status = 'triggered';
           // }
-          if (!session.data.orders.buy?.['0.618']?.orderId) {
+          if (
+            !session.data.orders.buy?.['0.618']?.orderId &&
+            balances?.[usdAssetName] >= this.ORDER_VALUE.toString()
+          ) {
             session.data.orders.buy['0.618'] = await this.buy(session, '0.618');
             console.log(`add buy 0.618`);
           }
@@ -168,7 +202,10 @@ export class DhmStrategyProcessService {
         }
 
         if (this.getFib(session, '0.618') >= tickerPrice) {
-          if (!session.data.orders.buy?.['1.618']?.orderId) {
+          if (
+            !session.data.orders.buy?.['1.618']?.orderId &&
+            balances?.[usdAssetName] >= this.ORDER_VALUE.toString()
+          ) {
             session.data.orders.buy['1.618'] = await this.buy(session, '1.618');
             console.log(`add buy 1.618`);
           }
@@ -192,7 +229,10 @@ export class DhmStrategyProcessService {
         }
 
         if (this.getFib(session, '1.618') >= tickerPrice) {
-          if (!session.data.orders.buy?.['2.414']?.orderId) {
+          if (
+            !session.data.orders.buy?.['2.414']?.orderId &&
+            balances?.[usdAssetName] >= this.ORDER_VALUE.toString()
+          ) {
             session.data.orders.buy['2.414'] = await this.buy(session, '2.414');
             console.log(`add buy 2.414`);
           }
@@ -549,10 +589,10 @@ export class DhmStrategyProcessService {
 
   private async buy(session: any, level: string) {
     const symbol = session.pair.symbol;
+    const price = this.getFib(session, level);
     const quantity = currencyjs(this.ORDER_VALUE, {
       precision: session.pair.precision,
-    }).divide(Number(this.getFib(session, level)));
-    const price = this.getFib(session, level);
+    }).divide(Number(price));
 
     try {
       // await here because neet to catch error
