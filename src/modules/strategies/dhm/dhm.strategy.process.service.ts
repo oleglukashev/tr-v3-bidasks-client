@@ -35,7 +35,7 @@ export class DhmStrategyProcessService {
     let account;
     try {
       account = await this.mexcService.accountInfo();
-    } catch(e) {
+    } catch (e) {
       console.log(e);
       return;
     }
@@ -52,10 +52,15 @@ export class DhmStrategyProcessService {
       const usdAssetName = session.pair.symbol.includes('USDT')
         ? 'USDT'
         : 'USDC';
+      const assetName = session.pair.symbol
+        .replace('USDT', '')
+        .replace('USDC', '');
+      const assetBalance = balances?.[assetName] || '0';
 
       console.log(usdAssetName);
       console.log(balances?.[usdAssetName]);
       console.log(this.ORDER_VALUE.toString());
+      console.log(Number(balances?.[assetName]));
 
       if (!session.data?.orders) {
         session.data.orders = {
@@ -190,7 +195,10 @@ export class DhmStrategyProcessService {
           // create sell for 0.5
           if (
             session.data.orders.buy?.['0.5']?.origQty &&
-            !session.data.orders.sell['0.5']
+            !session.data.orders.sell['0.5'] &&
+            Number(assetBalance) &&
+            Number(assetBalance) >=
+              Number(session.data.orders.buy?.['0.5']?.origQty || 0)
           ) {
             session.data.orders.sell['0.5'] = await this.sell(
               session,
@@ -217,7 +225,10 @@ export class DhmStrategyProcessService {
           // create sell for 0.618
           if (
             session.data.orders.buy?.['0.618']?.origQty &&
-            !session.data.orders.sell['0.618']
+            !session.data.orders.sell['0.618'] &&
+            Number(assetBalance) &&
+            Number(assetBalance) >=
+              Number(session.data.orders.buy?.['0.618']?.origQty || 0)
           ) {
             session.data.orders.sell['0.618'] = await this.sell(
               session,
@@ -244,7 +255,10 @@ export class DhmStrategyProcessService {
           // create sell for 1.618
           if (
             session.data.orders.buy?.['1.618']?.origQty &&
-            !session.data.orders.sell['1.618']
+            !session.data.orders.sell['1.618'] &&
+            Number(assetBalance) &&
+            Number(assetBalance) >=
+              Number(session.data.orders.buy?.['1.618']?.origQty || 0)
           ) {
             session.data.orders.sell['1.618'] = await this.sell(
               session,
@@ -263,7 +277,10 @@ export class DhmStrategyProcessService {
           // create sell for 2.414
           if (
             session.data.orders.buy?.['2.414']?.origQty &&
-            !session.data.orders.sell['2.414']
+            !session.data.orders.sell['2.414'] &&
+            Number(assetBalance) &&
+            Number(assetBalance) >=
+              Number(session.data.orders.buy?.['2.414']?.origQty || 0)
           ) {
             session.data.orders.sell['2.414'] = await this.sell(
               session,
