@@ -17,6 +17,7 @@ import { BalancesEntityService } from './modules/entity-services/balances-entity
 import { BalanceTrxsEntityService } from './modules/entity-services/balance-trxs-entity-service';
 import { DhmStrategyHistoryProcessService } from './modules/strategies/dhm/dhm.strategy.history.process.service';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { HistoryStrategySessionsEntityService } from './modules/entity-services/history-strategy-sessions-entity-service';
 //import { BuyTestCommand } from "./commands/buy-test.odata.command";
 
 @Module({
@@ -54,6 +55,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
     PairsEntityService,
     KlinesEntityService,
     TickerPricesService,
+    HistoryStrategySessionsEntityService,
     StrategySessionsEntityService,
     StrategySessionTrxsEntityService,
     BalancesEntityService,

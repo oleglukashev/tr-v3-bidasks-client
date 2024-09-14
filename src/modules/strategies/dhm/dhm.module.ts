@@ -15,6 +15,7 @@ import { DhmStrategyProcessService } from './dhm.strategy.process.service';
 import { BalanceTrxsEntityService } from '../../entity-services/balance-trxs-entity-service';
 import { BalancesEntityService } from '../../entity-services/balances-entity-service';
 import { DhmStrategyHistoryProcessService } from './dhm.strategy.history.process.service';
+import { HistoryStrategySessionsEntityService } from '../../entity-services/history-strategy-sessions-entity-service';
 
 @Module({
   imports: [TickerPricesModule, MexcModule],
@@ -22,6 +23,7 @@ import { DhmStrategyHistoryProcessService } from './dhm.strategy.history.process
     PrismaService,
     DhmStrategyService,
     KlinesEntityService,
+    HistoryStrategySessionsEntityService,
     StrategySessionsEntityService,
     StrategySessionTrxsEntityService,
     DhmStrategyDetectCronService,

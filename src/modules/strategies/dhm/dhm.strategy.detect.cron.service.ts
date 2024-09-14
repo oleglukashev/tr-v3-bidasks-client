@@ -1,20 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { KlinesEntityService } from '../../entity-services/klines-entity-service';
 import { PrismaService } from '../../../prisma.service';
 import { DhmStrategyDetectService } from './dhm.strategy.detect.service';
-import moment from "moment";
-import { startOfHourTs } from "../../../utils/time";
-import { InjectRedis } from "@nestjs-modules/ioredis";
-import Redis from "ioredis";
+import { startOfHourTs } from '../../../utils/time';
 
 @Injectable()
 export class DhmStrategyDetectCronService {
   constructor(
     private readonly dhmStrategyDetectService: DhmStrategyDetectService,
-    private readonly klinesEntityService: KlinesEntityService,
     private readonly prismaService: PrismaService,
-    @InjectRedis('sessionDb') private readonly redisSessionDb: Redis,
   ) {}
 
   @Cron('*/10 * * * * *')
@@ -30,7 +24,7 @@ export class DhmStrategyDetectCronService {
           GROUP BY pair_id
       ) subquery
       ON k.pair_id = subquery.pair_id AND k.ts = subquery.latest_timestamp
-      WHERE k.interval = 60 AND k.ts < ${startCurrentHoutTs};
+      WHERE k.interval = 60 AND k.ts < ${startCurrentHoutTs} AND k.pair_id = ${process.env.PAIR_ID}::integer;
     `;
     // INTERVAL 60m!!!!
 

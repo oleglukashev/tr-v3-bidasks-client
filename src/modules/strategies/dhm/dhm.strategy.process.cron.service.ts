@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { DhmStrategyProcessService } from './dhm.strategy.process.service';
+import * as process from 'node:process';
 
 @Injectable()
 export class DhmStrategyProcessCronService {
@@ -8,8 +9,10 @@ export class DhmStrategyProcessCronService {
     private readonly dhmStrategyProcessService: DhmStrategyProcessService,
   ) {}
 
-  @Cron('*/8 * * * * *')
+  @Cron('*/5 * * * * *')
   async handleCron() {
-    await this.dhmStrategyProcessService.process();
+    await this.dhmStrategyProcessService.process(
+      process.env.NODE_ENV === 'production',
+    );
   }
 }

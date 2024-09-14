@@ -14,6 +14,8 @@ import { DhmStrategyModule } from './modules/strategies/dhm/dhm.module';
 import { TickerPricesModule } from './modules/ticker-prices/ticker-prices.module';
 import { BalanceTrxsEntityService } from './modules/entity-services/balance-trxs-entity-service';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { ApiHistoryStrategySessionsModule } from './modules/api/v1/history-strategy-sessions/history-strategy-sessions.module';
+import { ApiKlinesModule } from './modules/api/v1/klines/klines.module';
 
 @Module({
   imports: [
@@ -55,6 +57,8 @@ import { RedisModule } from '@nestjs-modules/ioredis';
     TickerPricesModule,
     // Strategies
     DhmStrategyModule,
+    ApiHistoryStrategySessionsModule,
+    ApiKlinesModule,
   ],
   controllers: [],
   providers: [

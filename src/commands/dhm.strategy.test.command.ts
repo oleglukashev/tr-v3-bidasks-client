@@ -47,9 +47,9 @@ export class DhmStrategyTestCommand extends CommandRunner {
     });
 
     for (const kline of klines) {
-      await this.dhmStrategyDetectService.detect(kline.id);
+      await this.dhmStrategyDetectService.detect(kline.id, true);
     }
-    await this.dhmStrategyHistoryProcessService.process(false);
+    await this.dhmStrategyHistoryProcessService.process();
     console.log('Complete');
   }
 }

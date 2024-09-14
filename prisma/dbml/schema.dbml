@@ -20,6 +20,7 @@ Table pairs {
   activated Boolean [not null, default: true]
   klines klines [not null]
   strategySessions strategy_sessions [not null]
+  historyStrategySessions history_strategy_sessions [not null]
   tradingServiceId Int [not null]
   tradingService trading_services [not null]
   createdAt DateTime [default: `now()`, not null]
@@ -85,6 +86,18 @@ Table strategy_sessions {
   createdAt DateTime [default: `now()`, not null]
 }
 
+Table history_strategy_sessions {
+  id Int [pk, increment]
+  status String [not null, default: 'waiting']
+  data Json [not null, default: '{}']
+  pairId Int [not null]
+  pair pairs [not null]
+  trxs strategy_session_trxs [not null]
+  startTs BigInt [not null]
+  finishTs BigInt
+  createdAt DateTime [default: `now()`, not null]
+}
+
 Table strategy_session_trxs {
   id Int [pk, increment]
   status String [not null, default: 'pending']
@@ -96,6 +109,8 @@ Table strategy_session_trxs {
   strategySessionId Int [not null]
   strategySession strategy_sessions [not null]
   createdAt DateTime [default: `now()`, not null]
+  HistoryStrategySession history_strategy_sessions
+  historyStrategySessionId Int
 }
 
 Ref: pairs.tradingServiceId > trading_services.id [delete: Restrict]
@@ -106,4 +121,8 @@ Ref: balance_trxs.balanceId > balances.id [delete: Restrict]
 
 Ref: strategy_sessions.pairId > pairs.id [delete: Restrict]
 
+Ref: history_strategy_sessions.pairId > pairs.id [delete: Restrict]
+
 Ref: strategy_session_trxs.strategySessionId > strategy_sessions.id [delete: Restrict]
+
+Ref: strategy_session_trxs.historyStrategySessionId > history_strategy_sessions.id
