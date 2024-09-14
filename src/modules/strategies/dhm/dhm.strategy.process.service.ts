@@ -6,6 +6,7 @@ import { MexcService } from '../../trading-services/mexc/mexc.service';
 import { nowTs } from '../../../utils/time';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
+import * as yargs from 'yargs';
 
 @Injectable()
 export class DhmStrategyProcessService {
@@ -15,6 +16,7 @@ export class DhmStrategyProcessService {
     @InjectRedis('priceDb') private readonly redis: Redis,
   ) {}
 
+  readonly argv: any = yargs.argv;
   readonly FINISH_IN_MS = 3 * 24 * 60 * 60 * 1000;
   readonly ORDER_VALUE = 10;
 
@@ -247,7 +249,7 @@ export class DhmStrategyProcessService {
     return this.strategySessionsEntityService.findMany({
       where: {
         status: { in: ['waiting', 'triggered'] },
-        pairId: parseInt(process.env.PAIR_ID),
+        pairId: parseInt(this.argv.PAIR_ID),
       },
       include: { pair: true },
     });
