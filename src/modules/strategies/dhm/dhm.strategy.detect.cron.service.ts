@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as yargs from 'yargs';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../../prisma.service';
 import { DhmStrategyDetectService } from './dhm.strategy.detect.service';
@@ -13,6 +14,7 @@ export class DhmStrategyDetectCronService {
 
   @Cron('*/10 * * * * *')
   async handleCron() {
+    const argv: any = yargs.argv;
     const startCurrentHoutTs = startOfHourTs();
     const pairsLastKlines: any = await this.prismaService.$queryRaw`
       SELECT k.id
@@ -24,7 +26,7 @@ export class DhmStrategyDetectCronService {
           GROUP BY pair_id
       ) subquery
       ON k.pair_id = subquery.pair_id AND k.ts = subquery.latest_timestamp
-      WHERE k.interval = 60 AND k.ts < ${startCurrentHoutTs} AND k.pair_id = ${process.env.PAIR_ID}::integer;
+      WHERE k.interval = 60 AND k.ts < ${startCurrentHoutTs} AND k.pair_id = ${argv.PAIR_ID}::integer;
     `;
     // INTERVAL 60m!!!!
 

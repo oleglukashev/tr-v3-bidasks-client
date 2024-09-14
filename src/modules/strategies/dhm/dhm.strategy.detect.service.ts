@@ -2,21 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 import { getFibRetracement } from '../../../utils/fib';
 import { KlinesEntityService } from '../../entity-services/klines-entity-service';
-import { HistoryStrategySessionsEntityService } from '../../entity-services/history-strategy-sessions-entity-service';
 
 @Injectable()
 export class DhmStrategyDetectService {
-  strategySession = null;
   constructor(
     private readonly strategySessionsEntityService: StrategySessionsEntityService,
-    private readonly historyStrategySessionsEntityService: HistoryStrategySessionsEntityService,
     private readonly klinesEntityService: KlinesEntityService,
   ) {}
 
   async detect(klineId, test = false) {
-    this.strategySession = test
-      ? this.historyStrategySessionsEntityService
-      : this.strategySessionsEntityService;
     const kline2 = await this.klinesEntityService.findFirst({
       where: { id: klineId },
     });
@@ -50,30 +44,31 @@ export class DhmStrategyDetectService {
       return;
     }
 
-    const existStrategySession = await this.strategySession.findFirst({
-      where: {
-        AND: [
-          {
-            pairId: kline2.pairId,
-          },
-          {
-            data: {
-              path: ['kline1Id'],
-              equals: kline1.id,
+    const existStrategySession =
+      await this.strategySessionsEntityService.findFirst({
+        where: {
+          AND: [
+            {
+              pairId: kline2.pairId,
             },
-          },
-          {
-            data: {
-              path: ['kline2Id'],
-              equals: kline2.id,
+            {
+              data: {
+                path: ['kline1Id'],
+                equals: kline1.id,
+              },
             },
-          },
-        ],
-      },
-    });
+            {
+              data: {
+                path: ['kline2Id'],
+                equals: kline2.id,
+              },
+            },
+          ],
+        },
+      });
 
     if (!existStrategySession) {
-      await this.strategySession.baseCreate({
+      await this.strategySessionsEntityService.baseCreate({
         pairId: kline1.pairId,
         startTs: kline1.ts,
         data: {

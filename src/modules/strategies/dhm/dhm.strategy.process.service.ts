@@ -247,7 +247,7 @@ export class DhmStrategyProcessService {
     return this.strategySessionsEntityService.findMany({
       where: {
         status: { in: ['waiting', 'triggered'] },
-        pair: { connect: process.env.PAIR_ID },
+        pairId: parseInt(process.env.PAIR_ID),
       },
       include: { pair: true },
     });
@@ -258,7 +258,9 @@ export class DhmStrategyProcessService {
     const price = this.getFib(session, level);
     const quantity = currencyjs(this.ORDER_VALUE, {
       precision: session.pair.precision,
-    }).divide(Number(price));
+    })
+      .divide(Number(price))
+      .toString();
 
     try {
       // await here because neet to catch error
