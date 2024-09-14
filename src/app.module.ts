@@ -1,13 +1,10 @@
 import { Module } from '@nestjs/common';
-import { TradingServicesEntityService } from './modules/entity-services/trading-services-entity-service';
 import { PairsEntityService } from './modules/entity-services/pairs-entity-service';
 import { StrategiesEntityService } from './modules/entity-services/strategies-entity-service';
 import { StrategySessionsEntityService } from './modules/entity-services/strategy-sessions-entity-service';
 import { PrismaService } from './prisma.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
-import { BullBoardModule } from '@bull-board/nestjs';
-import { ExpressAdapter } from '@bull-board/express';
 import { DhmStrategyModule } from './modules/strategies/dhm/dhm.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 
@@ -41,13 +38,6 @@ import { RedisModule } from '@nestjs-modules/ioredis';
         port: 6379,
       },
     }),
-    BullModule.registerQueue({
-      name: 'klineGrabber',
-    }),
-    BullBoardModule.forRoot({
-      route: '/queues',
-      adapter: ExpressAdapter,
-    }),
     // Strategies
     DhmStrategyModule,
   ],
@@ -55,7 +45,6 @@ import { RedisModule } from '@nestjs-modules/ioredis';
   providers: [
     PrismaService,
     //Entity
-    TradingServicesEntityService,
     PairsEntityService,
     StrategiesEntityService,
     StrategySessionsEntityService,
