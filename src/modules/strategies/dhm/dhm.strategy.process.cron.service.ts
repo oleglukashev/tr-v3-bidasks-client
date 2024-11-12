@@ -9,10 +9,8 @@ export class DhmStrategyProcessCronService {
     private readonly dhmStrategyProcessService: DhmStrategyProcessService,
   ) {}
 
-  @Cron('*/5 * * * * *')
+  @Cron('*/15 * * * * *')
   async handleCron() {
-    await this.dhmStrategyProcessService.process(
-      process.env.NODE_ENV === 'production',
-    );
+    await this.dhmStrategyProcessService.process(true);
   }
 }

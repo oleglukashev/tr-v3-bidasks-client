@@ -46,8 +46,8 @@ model Pair {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([name])
-  @@unique([symbol])
+  @@unique([name, tradingServiceId])
+  @@unique([symbol, tradingServiceId])
   @@map("pairs")
 }
 

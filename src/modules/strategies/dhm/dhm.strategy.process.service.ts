@@ -7,6 +7,7 @@ import { nowTs } from '../../../utils/time';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import * as yargs from 'yargs';
+import { bybit } from 'ccxt';
 
 @Injectable()
 export class DhmStrategyProcessService {
@@ -27,226 +28,164 @@ export class DhmStrategyProcessService {
   }
 
   private async check(allowMakeTrxs = true) {
-    const sessions = await this.activeSessions();
-    let account;
-    try {
-      account = await this.mexcService.accountInfo();
-    } catch (e) {
-      console.log(e);
+    const session = await this.activeSession();
+    if (!session) {
       return;
     }
-    const balances = {};
+    // let account;
+    // try {
+    //   account = await this.mexcService.accountInfo();
+    // } catch (e) {
+    //   console.log(e);
+    //   return;
+    // }
+    // const balances = {};
+    //
+    // if (account?.balances?.length) {
+    //   for (const item of account.balances) {
+    //     balances[item.asset] = item.free;
+    //   }
+    // }
 
-    if (account?.balances?.length) {
-      for (const item of account.balances) {
-        balances[item.asset] = item.free;
+    // for (const session of sessions) {
+    const tickerPrice = await this.redis.get(session.pair.symbol);
+    // const usdAssetName = session.pair.symbol.includes('USDT')
+    //   ? 'USDT'
+    //   : 'USDC';
+    // const assetName = session.pair.symbol
+    //   .replace('USDT', '')
+    //   .replace('USDC', '');
+    //const assetBalance = balances?.[assetName] || '0';
+
+    if (!session.data?.orders) {
+      session.data.orders = {
+        buy: {},
+        sell: {},
+      };
+    }
+
+    // update high and recreate orders if status is waiting and price is higher
+    if (session.status === 'waiting' && tickerPrice > session.data.high) {
+      session.data.high = tickerPrice;
+      console.log(`set new high`);
+
+      if (allowMakeTrxs) {
+        // recreate previous orders
+        await this.recreateOrders(session);
       }
     }
 
-    for (const session of sessions) {
-      const tickerPrice = await this.redis.get(session.pair.symbol);
-      const usdAssetName = session.pair.symbol.includes('USDT')
-        ? 'USDT'
-        : 'USDC';
-      const assetName = session.pair.symbol
-        .replace('USDT', '')
-        .replace('USDC', '');
-      const assetBalance = balances?.[assetName] || '0';
+    // check status as 'waiting' and update it to triggered when price is under 0.5
+    if (
+      this.getFib(session, '0.5') >= tickerPrice &&
+      session.status === 'waiting'
+    ) {
+      session.status = 'triggered';
+      console.log(`set triggered`);
+    }
 
-      console.log(usdAssetName);
-      console.log(balances?.[usdAssetName]);
-      console.log(this.ORDER_VALUE.toString());
-      console.log(Number(balances?.[assetName]));
+    // if (allowMakeTrxs) {
+    //   //set orders
+    //   if (
+    //     !session.data.orders.buy?.['0.5']?.orderId &&
+    //     Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
+    //   ) {
+    //     session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
+    //     console.log(`add buy 0.5`);
+    //   }
+    // }
 
-      if (!session.data?.orders) {
-        session.data.orders = {
-          buy: {},
-          sell: {},
-        };
-      }
+    // if after we have 30 klines and status if waiting or triggered then finish this sessions
+    if (
+      nowTs() - session.data.kline2.ts > this.FINISH_IN_MS &&
+      (session.status === 'waiting' || session.status === 'triggered')
+    ) {
+      session.status = 'finished_by_length';
+      console.log(`set finish by length`);
+    }
 
-      if (allowMakeTrxs) {
-        //set orders
+    console.log(session.data);
+
+    if (allowMakeTrxs && session.status === 'triggered') {
+      if (this.getFib(session, '0.382') >= tickerPrice) {
         if (
-          !session.data.orders.buy?.['0.5']?.orderId &&
-          Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
+          !session.data.orders.buy?.['0.5']?.id
+          //Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
         ) {
-          session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
-          console.log(`add buy 0.5`);
+          console.log(`start add buy feature 0.5`);
+          session.data.orders.buy['0.5'] = await this.buyFeature(
+            session,
+            '0.5',
+            '0.382',
+            '1.618',
+          );
+          console.log(`add buy feature 0.5`);
         }
+
+        // create sell for 0.5
+        // if (
+        //   session.data.orders.buy?.['0.5']?.origQty &&
+        //   !session.data.orders.sell['0.5'] &&
+        //   Number(assetBalance) &&
+        //   Number(assetBalance) >=
+        //     Number(session.data.orders.buy?.['0.5']?.origQty || 0)
+        // ) {
+        //   session.data.orders.sell['0.5'] = await this.sell(
+        //     session,
+        //     '0.5',
+        //     '0.382',
+        //   );
+        //   console.log(`add sell 0.5`);
+        // }
       }
 
-      if (session.status === 'waiting') {
-        //await this.setHigh(session, session.data.kline2, allowMakeTrxs);
-        if (tickerPrice > session.data.high) {
-          session.data.high = tickerPrice;
-          console.log(`set new high`);
-
-          if (allowMakeTrxs) {
-            // cancel previous orders
-            if (session.data.orders.buy?.['0.5']?.orderId) {
-              await this.cancel(session.pair.symbol, {
-                orderId: session.data.orders.buy['0.5'].orderId,
-              });
-              console.log(`cancel order 0.5`);
-            }
-
-            // clear orders data
-            session.data.orders.buy = {};
-
-            // create buy 0.5
-            if (Number(balances?.[usdAssetName]) >= this.ORDER_VALUE) {
-              session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
-              console.log(`add buy 0.5`);
-            }
-          }
+      if (this.getFib(session, '0.5') >= tickerPrice) {
+        if (
+          !session.data.orders.buy?.['0.618']?.id
+          //Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
+        ) {
+          console.log(`start add buy feature 0.618`);
+          session.data.orders.buy['0.618'] = await this.buyFeature(
+            session,
+            '0.618',
+            '0.5',
+            '1.618',
+          );
+          console.log(`add buy feature 0.618`);
         }
+
+        // create sell for 0.618
+        // if (
+        //   session.data.orders.buy?.['0.618']?.origQty &&
+        //   !session.data.orders.sell['0.618'] &&
+        //   Number(assetBalance) &&
+        //   Number(assetBalance) >=
+        //     Number(session.data.orders.buy?.['0.618']?.origQty || 0)
+        // ) {
+        //   session.data.orders.sell['0.618'] = await this.sell(
+        //     session,
+        //     '0.618',
+        //     '0.5',
+        //   );
+        //   console.log(`add sell 0.618`);
+        // }
       }
 
-      // if after we have 30 klines and status if waiting or triggered then finish this sessions
-      if (nowTs() - session.data.kline2.ts > this.FINISH_IN_MS) {
-        await this.checkFinishByLength(session);
-        console.log(`check finish`);
+      if (this.getFib(session, '1.618') >= tickerPrice) {
+        // check stop loss
       }
-
-      if (allowMakeTrxs) {
-        if (this.getFib(session, '0.5') >= tickerPrice) {
-          if (
-            !session.data.orders.buy?.['0.618']?.orderId &&
-            Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
-          ) {
-            session.data.orders.buy['0.618'] = await this.buy(session, '0.618');
-            console.log(`add buy 0.618`);
-          }
-          if (session.status === 'waiting') {
-            session.status = 'triggered';
-          }
-
-          // create sell for 0.5
-          if (
-            session.data.orders.buy?.['0.5']?.origQty &&
-            !session.data.orders.sell['0.5'] &&
-            Number(assetBalance) &&
-            Number(assetBalance) >=
-              Number(session.data.orders.buy?.['0.5']?.origQty || 0)
-          ) {
-            session.data.orders.sell['0.5'] = await this.sell(
-              session,
-              '0.5',
-              '0.382',
-            );
-            console.log(`add sell 0.5`);
-          }
-        }
-
-        if (this.getFib(session, '0.618') >= tickerPrice) {
-          if (
-            !session.data.orders.buy?.['1.618']?.orderId &&
-            Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
-          ) {
-            session.data.orders.buy['1.618'] = await this.buy(session, '1.618');
-            console.log(`add buy 1.618`);
-          }
-
-          if (session.status === 'waiting') {
-            session.status = 'triggered';
-          }
-
-          // create sell for 0.618
-          if (
-            session.data.orders.buy?.['0.618']?.origQty &&
-            !session.data.orders.sell['0.618'] &&
-            Number(assetBalance) &&
-            Number(assetBalance) >=
-              Number(session.data.orders.buy?.['0.618']?.origQty || 0)
-          ) {
-            session.data.orders.sell['0.618'] = await this.sell(
-              session,
-              '0.618',
-              '0.5',
-            );
-            console.log(`add sell 0.618`);
-          }
-        }
-
-        if (this.getFib(session, '1.618') >= tickerPrice) {
-          if (
-            !session.data.orders.buy?.['2.414']?.orderId &&
-            Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
-          ) {
-            session.data.orders.buy['2.414'] = await this.buy(session, '2.414');
-            console.log(`add buy 2.414`);
-          }
-
-          if (session.status === 'waiting') {
-            session.status = 'triggered';
-          }
-
-          // create sell for 1.618
-          if (
-            session.data.orders.buy?.['1.618']?.origQty &&
-            !session.data.orders.sell['1.618'] &&
-            Number(assetBalance) &&
-            Number(assetBalance) >=
-              Number(session.data.orders.buy?.['1.618']?.origQty || 0)
-          ) {
-            session.data.orders.sell['1.618'] = await this.sell(
-              session,
-              '1.618',
-              '0.618',
-            );
-            console.log(`add sell 1.618`);
-          }
-        }
-
-        if (this.getFib(session, '2.414') >= tickerPrice) {
-          if (session.status === 'waiting') {
-            session.status = 'triggered';
-          }
-
-          // create sell for 2.414
-          if (
-            session.data.orders.buy?.['2.414']?.origQty &&
-            !session.data.orders.sell['2.414'] &&
-            Number(assetBalance) &&
-            Number(assetBalance) >=
-              Number(session.data.orders.buy?.['2.414']?.origQty || 0)
-          ) {
-            session.data.orders.sell['2.414'] = await this.sell(
-              session,
-              '2.414',
-              '1.618',
-            );
-            console.log(`add sell 2.414`);
-          }
-        }
-      }
-
-      await this.strategySessionsEntityService.baseUpdate(session.id, {
-        status: session.status,
-        data: session.data,
-      });
-      console.log('update');
     }
+
+    await this.strategySessionsEntityService.baseUpdate(session.id, {
+      status: session.status,
+      data: session.data,
+    });
+    console.log('update');
+    // }
   }
 
-  private async checkFinishByLength(session) {
-    //const now = nowTs();
-    console.log('get price finish');
-    //const tickerPrice = await this.redis.get(session.pair.symbol);
-    //await this.addSellAction(session, tickerPrice, null, now, '2.414');
-    //await this.addSellAction(session, tickerPrice, null, now, '1.618');
-    //await this.addSellAction(session, tickerPrice, null, now, '0.618');
-    //await this.addSellAction(session, tickerPrice, null, now, '0.5');
-    //await this.addSellAction(session, tickerPrice, null, now, '0.382');
-
-    if (session.status !== 'finished') {
-      session.status = 'finished';
-    }
-  }
-
-  private async activeSessions() {
-    return this.strategySessionsEntityService.findMany({
+  private async activeSession() {
+    return this.strategySessionsEntityService.findFirst({
       where: {
         status: { in: ['waiting', 'triggered'] },
         pairId: parseInt(this.argv.PAIR_ID),
@@ -287,27 +226,124 @@ export class DhmStrategyProcessService {
     }
   }
 
-  private async sell(session: any, buyLevel: string, sellLevel: string) {
-    const symbol = session.pair.symbol;
-    const quantity = session.data.orders.buy[buyLevel].origQty;
-    const price = this.getFib(session, sellLevel);
+  private async buyFeature(
+    session: any,
+    level: string,
+    profitLevel: string,
+    stopLevel: string,
+  ) {
+    const symbol = session.pair.symbol.replace('USDT', '/USDT:USDT');
+    const price = this.getFib(session, level);
+    const quantity = currencyjs(this.ORDER_VALUE, {
+      precision: session.pair.precision,
+    }).divide(Number(price)).value;
+
     try {
       // await here because neet to catch error
-      const res = await this.mexcService.newOrder(symbol, 'SELL', 'LIMIT', {
+      const exchange = new bybit({
+        apiKey: 'OPjbJFSBIP48EDZ6GU',
+        secret: 'XYcAvOJcrWZc99Z9LthHu9txnjLVKxOAkaiQ',
+        options: {
+          defaultType: 'future', // Указываем, что будем работать с фьючерсами
+        },
+      });
+
+      // Дополнительные параметры, специфичные для Bybit
+      const params = {
+        stop_loss: this.getFib(session, stopLevel),
+        take_profit: this.getFib(session, profitLevel),
+        // tp_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания TP
+        // sl_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания SL
+        // time_in_force: 'GoodTillCancel', // Время действия ордера
+      };
+
+      const order = await exchange.createOrder(
+        symbol,
+        'limit',
+        'buy',
         quantity,
         price,
-      });
-      return res;
+        params,
+      );
+      console.log('Ордер с TP/SL успешно создан:', order);
+      return order;
     } catch (e) {
       console.log(e);
+      console.log('error');
       return null;
     }
   }
 
+  // private async sell(session: any, buyLevel: string, sellLevel: string) {
+  //   const symbol = session.pair.symbol;
+  //   const quantity = session.data.orders.buy[buyLevel].origQty;
+  //   const price = this.getFib(session, sellLevel);
+  //   try {
+  //     // await here because neet to catch error
+  //     const res = await this.mexcService.newOrder(symbol, 'SELL', 'LIMIT', {
+  //       quantity,
+  //       price,
+  //     });
+  //     return res;
+  //   } catch (e) {
+  //     console.log(e);
+  //     return null;
+  //   }
+  // }
+
+  private async recreateOrders(session: any) {
+    console.log('recreate');
+    if (session.data.orders.buy?.['0.5']?.id) {
+      await this.cancel(session.pair.symbol, {
+        id: session.data.orders.buy['0.5'].id,
+      });
+      console.log(`cancel order 0.5`);
+    }
+
+    if (session.data.orders.buy?.['0.618']?.id) {
+      await this.cancel(session.pair.symbol, {
+        id: session.data.orders.buy['0.618'].id,
+      });
+      console.log(`cancel order 0.618`);
+    }
+
+    // clear orders data
+    session.data.orders.buy = {};
+
+    // create buy 0.5
+    //if (Number(balances) >= this.ORDER_VALUE) {
+    session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
+    console.log(`add buy 0.5`);
+    //}
+
+    //if (Number(balances) >= this.ORDER_VALUE) {
+    session.data.orders.buy['0.618'] = await this.buy(session, '0.618');
+    console.log(`add buy 0.618`);
+    //}
+  }
+
+  // private async cancel(symbol, options) {
+  //   try {
+  //     // await here because neet to catch error
+  //     const res = await this.mexcService.cancelOrder(symbol, options);
+  //     return res;
+  //   } catch (e) {
+  //     console.log(e);
+  //     return null;
+  //   }
+  // }
   private async cancel(symbol, options) {
+    symbol = symbol.replace('USDT', '/USDT:USDT');
     try {
       // await here because neet to catch error
-      const res = await this.mexcService.cancelOrder(symbol, options);
+      const exchange = new bybit({
+        apiKey: 'OPjbJFSBIP48EDZ6GU',
+        secret: 'XYcAvOJcrWZc99Z9LthHu9txnjLVKxOAkaiQ',
+        options: {
+          defaultType: 'future', // Указываем, что будем работать с фьючерсами
+        },
+      });
+      const res = await exchange.cancelOrder(options.id, symbol);
       return res;
     } catch (e) {
       console.log(e);

@@ -4,18 +4,35 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../../prisma.service';
 import { DhmStrategyDetectService } from './dhm.strategy.detect.service';
 import { startOfHourTs } from '../../../utils/time';
+import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 
 @Injectable()
 export class DhmStrategyDetectCronService {
   constructor(
     private readonly dhmStrategyDetectService: DhmStrategyDetectService,
+    private readonly strategySessoinsEntityService: StrategySessionsEntityService,
     private readonly prismaService: PrismaService,
   ) {}
 
-  @Cron('*/10 * * * * *')
+  @Cron('*/5 * * * * *')
   async handleCron() {
     const argv: any = yargs.argv;
     const startCurrentHoutTs = startOfHourTs();
+    const existTriggeredStrategySession =
+      await this.strategySessoinsEntityService.findFirst({
+        where: {
+          status: 'triggered',
+          pairId: parseInt(argv.PAIR_ID),
+        },
+      });
+
+    if (existTriggeredStrategySession) {
+      console.log(
+        `Triggered strategy sessions with pair id ${argv.PAIR_ID} already exist`,
+      );
+      return;
+    }
+
     const pairsLastKlines: any = await this.prismaService.$queryRaw`
       SELECT k.id
       FROM klines k
