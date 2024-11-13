@@ -48,7 +48,7 @@ export class DhmStrategyProcessService {
     // }
 
     // for (const session of sessions) {
-    const tickerPrice = await this.redis.get(session.pair.symbol);
+    const tickerPrice = await this.redis.get(`${this.argv.tradingServiceId}:${this.argv.pairId}:${this.argv.type}`);
     // const usdAssetName = session.pair.symbol.includes('USDT')
     //   ? 'USDT'
     //   : 'USDC';
@@ -188,7 +188,7 @@ export class DhmStrategyProcessService {
     return this.strategySessionsEntityService.findFirst({
       where: {
         status: { in: ['waiting', 'triggered'] },
-        pairId: parseInt(this.argv.PAIR_ID),
+        pairId: parseInt(this.argv.pairId),
       },
       include: { pair: true },
     });
