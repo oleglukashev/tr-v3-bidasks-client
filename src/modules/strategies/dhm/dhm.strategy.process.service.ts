@@ -48,7 +48,9 @@ export class DhmStrategyProcessService {
     // }
 
     // for (const session of sessions) {
-    const tickerPrice = await this.redis.get(`${this.argv.tradingServiceId}:${this.argv.pairId}:${this.argv.type}`);
+    const tickerPrice = await this.redis.get(
+      `${this.argv.tradingServiceId}:${this.argv.pairId}:${this.argv.type}`,
+    );
     // const usdAssetName = session.pair.symbol.includes('USDT')
     //   ? 'USDT'
     //   : 'USDC';

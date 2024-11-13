@@ -22,13 +22,13 @@ export class DhmStrategyDetectCronService {
       await this.strategySessoinsEntityService.findFirst({
         where: {
           status: 'triggered',
-          pairId: parseInt(argv.PAIR_ID),
+          pairId: parseInt(argv.pairId),
         },
       });
 
     if (existTriggeredStrategySession) {
       console.log(
-        `Triggered strategy sessions with pair id ${argv.PAIR_ID} already exist`,
+        `Triggered strategy sessions with pair id ${argv.pairId} already exist`,
       );
       return;
     }
@@ -43,7 +43,7 @@ export class DhmStrategyDetectCronService {
           GROUP BY pair_id
       ) subquery
       ON k.pair_id = subquery.pair_id AND k.ts = subquery.latest_timestamp
-      WHERE k.interval = 60 AND k.ts < ${startCurrentHoutTs} AND k.pair_id = ${argv.PAIR_ID}::integer;
+      WHERE k.interval = 60 AND k.ts < ${startCurrentHoutTs} AND k.pair_id = ${argv.pairId}::integer;
     `;
     // INTERVAL 60m!!!!
 
