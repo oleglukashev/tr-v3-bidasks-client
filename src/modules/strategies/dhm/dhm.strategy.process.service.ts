@@ -77,7 +77,6 @@ export class DhmStrategyProcessService {
       }
     }
 
-    // check status as 'waiting' and update it to triggered when price is under 0.5
     if (
       this.getFib(session, '0.5') >= tickerPrice &&
       session.status === 'waiting'
@@ -106,9 +105,13 @@ export class DhmStrategyProcessService {
       console.log(`set finish by length`);
     }
 
-    console.log(session.data);
-
     if (allowMakeTrxs && session.status === 'triggered') {
+      if (this.getFib(session, '0.382') <= tickerPrice) {
+        await this.tryCancelByLevel(session, '0.618');
+        session.status = 'finished';
+        console.log(`set finished`);
+      }
+
       if (this.getFib(session, '0.382') >= tickerPrice) {
         if (
           !session.data.orders.buy?.['0.5']?.id
@@ -250,6 +253,8 @@ export class DhmStrategyProcessService {
         },
       });
 
+      //await exchange.setMarginMode('ISOLATED', symbol, { leverage: 10 });
+
       // Дополнительные параметры, специфичные для Bybit
       const params = {
         stop_loss: this.getFib(session, stopLevel),
@@ -293,21 +298,19 @@ export class DhmStrategyProcessService {
   //   }
   // }
 
+  private async tryCancelByLevel(session, level) {
+    if (session.data.orders.buy?.[level]?.id) {
+      await this.cancel(session.pair.symbol, {
+        id: session.data.orders.buy[level].id,
+      });
+      console.log(`cancel order ${level}`);
+    }
+  }
+
   private async recreateOrders(session: any) {
     console.log('recreate');
-    if (session.data.orders.buy?.['0.5']?.id) {
-      await this.cancel(session.pair.symbol, {
-        id: session.data.orders.buy['0.5'].id,
-      });
-      console.log(`cancel order 0.5`);
-    }
-
-    if (session.data.orders.buy?.['0.618']?.id) {
-      await this.cancel(session.pair.symbol, {
-        id: session.data.orders.buy['0.618'].id,
-      });
-      console.log(`cancel order 0.618`);
-    }
+    await this.tryCancelByLevel(session, '0.5');
+    await this.tryCancelByLevel(session, '0.618');
 
     // clear orders data
     session.data.orders.buy = {};
@@ -357,7 +360,7 @@ export class DhmStrategyProcessService {
     return getFibRetracement({
       levels: {
         0: session.data.high,
-        1: session.data.kline1.low,
+        1: session.data.low,
       },
     })[key].toString();
   }
