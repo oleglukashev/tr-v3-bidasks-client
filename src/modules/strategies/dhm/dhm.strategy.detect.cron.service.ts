@@ -21,7 +21,7 @@ export class DhmStrategyDetectCronService {
     const existTriggeredStrategySession =
       await this.strategySessoinsEntityService.findFirst({
         where: {
-          status: 'triggered',
+          status: { in: ['waiting', 'triggered'] },
           pairId: parseInt(argv.pairId),
         },
       });
