@@ -199,37 +199,37 @@ export class DhmStrategyProcessService {
     });
   }
 
-  private async buy(session: any, level: string) {
-    const symbol = session.pair.symbol;
-    const price = this.getFib(session, level);
-    const quantity = currencyjs(this.ORDER_VALUE, {
-      precision: session.pair.precision,
-    })
-      .divide(Number(price))
-      .toString();
-
-    try {
-      // await here because neet to catch error
-      const res = await this.mexcService.newOrder(symbol, 'BUY', 'LIMIT', {
-        quantity,
-        price,
-      });
-      return res;
-      // {
-      //   symbol: 'KASUSDT',
-      //   orderId: 'C02__452751805076508672094',
-      //   orderListId: -1,
-      //   price: '0.16',
-      //   origQty: '10',
-      //   type: 'LIMIT',
-      //   side: 'BUY',
-      //   transactTime: 1723726677918
-      // }
-    } catch (e) {
-      console.log(e);
-      return null;
-    }
-  }
+  // private async buy(session: any, level: string) {
+  //   const symbol = session.pair.symbol;
+  //   const price = this.getFib(session, level);
+  //   const quantity = currencyjs(this.ORDER_VALUE, {
+  //     precision: session.pair.precision,
+  //   })
+  //     .divide(Number(price))
+  //     .toString();
+  //
+  //   try {
+  //     // await here because neet to catch error
+  //     const res = await this.mexcService.newOrder(symbol, 'BUY', 'LIMIT', {
+  //       quantity,
+  //       price,
+  //     });
+  //     return res;
+  //     // {
+  //     //   symbol: 'KASUSDT',
+  //     //   orderId: 'C02__452751805076508672094',
+  //     //   orderListId: -1,
+  //     //   price: '0.16',
+  //     //   origQty: '10',
+  //     //   type: 'LIMIT',
+  //     //   side: 'BUY',
+  //     //   transactTime: 1723726677918
+  //     // }
+  //   } catch (e) {
+  //     console.log(e);
+  //     return null;
+  //   }
+  // }
 
   private async buyFeature(
     session: any,
@@ -317,13 +317,25 @@ export class DhmStrategyProcessService {
 
     // create buy 0.5
     //if (Number(balances) >= this.ORDER_VALUE) {
-    session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
-    console.log(`add buy 0.5`);
+    console.log(`start add buy feature 0.5`);
+    session.data.orders.buy['0.5'] = await this.buyFeature(
+      session,
+      '0.5',
+      '0.382',
+      '1.618',
+    );
+    console.log(`add buy feature 0.5`);
     //}
 
     //if (Number(balances) >= this.ORDER_VALUE) {
-    session.data.orders.buy['0.618'] = await this.buy(session, '0.618');
-    console.log(`add buy 0.618`);
+    console.log(`start add buy feature 0.618`);
+    session.data.orders.buy['0.618'] = await this.buyFeature(
+      session,
+      '0.618',
+      '0.5',
+      '1.618',
+    );
+    console.log(`add buy feature 0.618`);
     //}
   }
 
