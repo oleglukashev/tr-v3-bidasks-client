@@ -5,6 +5,7 @@ import { useContainer } from 'class-validator';
 import { PrismaClientExceptionFilter } from './filters/prisma-client-exception.filter';
 import { PrismaClientValidationFilter } from './filters/prisma-client-validation.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as yargs from 'yargs';
 
 (BigInt.prototype as any).toJSON = function () {
   return this.toString();
@@ -12,13 +13,13 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const app: NestExpressApplication = await NestFactory.create(AppModule);
+  const argv: any = yargs.argv;
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(
     new PrismaClientExceptionFilter(httpAdapter),
     new PrismaClientValidationFilter(),
   );
-
-  await app.listen(process.env.PORT);
+  await app.listen(argv.port);
 }
 void bootstrap();
