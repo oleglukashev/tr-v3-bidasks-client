@@ -73,7 +73,7 @@ export class DhmStrategyProcessService {
 
       if (allowMakeTrxs) {
         // recreate previous orders
-        await this.recreateOrders(session);
+        await this.recreateOrders(session, tickerPrice);
       }
     }
 
@@ -85,17 +85,6 @@ export class DhmStrategyProcessService {
       console.log(`set triggered`);
     }
 
-    // if (allowMakeTrxs) {
-    //   //set orders
-    //   if (
-    //     !session.data.orders.buy?.['0.5']?.orderId &&
-    //     Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
-    //   ) {
-    //     session.data.orders.buy['0.5'] = await this.buy(session, '0.5');
-    //     console.log(`add buy 0.5`);
-    //   }
-    // }
-
     // if after we have 30 klines and status if waiting or triggered then finish this sessions
     if (
       nowTs() - session.data.kline2.ts > this.FINISH_IN_MS &&
@@ -105,80 +94,40 @@ export class DhmStrategyProcessService {
       console.log(`set finish by length`);
     }
 
-    if (allowMakeTrxs && session.status === 'triggered') {
-      if (this.getFib(session, '0.382') <= tickerPrice) {
-        await this.tryCancelByLevel(session, '0.618');
-        session.status = 'finished';
-        console.log(`set finished`);
-      }
-
-      if (this.getFib(session, '0.382') >= tickerPrice) {
-        if (
-          !session.data.orders.buy?.['0.5']?.id
-          //Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
-        ) {
-          console.log(`start add buy feature 0.5`);
-          session.data.orders.buy['0.5'] = await this.buyFeature(
-            session,
-            '0.5',
-            '0.382',
-            '1.618',
-          );
-          console.log(`add buy feature 0.5`);
+    if (allowMakeTrxs) {
+      if (session.status === 'triggered') {
+        if (this.getFib(session, '0.382') <= tickerPrice) {
+          // if price didn't come to 0.618 and up to 0.382 we close feature of 0.618
+          await this.tryCancelByLevel(session, '0.618');
+          // if price up to 0.382 we finish the session
+          session.status = 'finished';
+          console.log(`set finished`);
         }
 
-        // create sell for 0.5
-        // if (
-        //   session.data.orders.buy?.['0.5']?.origQty &&
-        //   !session.data.orders.sell['0.5'] &&
-        //   Number(assetBalance) &&
-        //   Number(assetBalance) >=
-        //     Number(session.data.orders.buy?.['0.5']?.origQty || 0)
-        // ) {
-        //   session.data.orders.sell['0.5'] = await this.sell(
-        //     session,
-        //     '0.5',
-        //     '0.382',
-        //   );
-        //   console.log(`add sell 0.5`);
-        // }
-      }
-
-      if (this.getFib(session, '0.5') >= tickerPrice) {
-        if (
-          !session.data.orders.buy?.['0.618']?.id
-          //Number(balances?.[usdAssetName]) >= this.ORDER_VALUE
-        ) {
-          console.log(`start add buy feature 0.618`);
-          session.data.orders.buy['0.618'] = await this.buyFeature(
-            session,
-            '0.618',
-            '0.5',
-            '1.618',
-          );
-          console.log(`add buy feature 0.618`);
+        if (this.getFib(session, '1.618') >= tickerPrice) {
+          // check stop loss
         }
-
-        // create sell for 0.618
-        // if (
-        //   session.data.orders.buy?.['0.618']?.origQty &&
-        //   !session.data.orders.sell['0.618'] &&
-        //   Number(assetBalance) &&
-        //   Number(assetBalance) >=
-        //     Number(session.data.orders.buy?.['0.618']?.origQty || 0)
-        // ) {
-        //   session.data.orders.sell['0.618'] = await this.sell(
-        //     session,
-        //     '0.618',
-        //     '0.5',
-        //   );
-        //   console.log(`add sell 0.618`);
-        // }
       }
 
-      if (this.getFib(session, '1.618') >= tickerPrice) {
-        // check stop loss
-      }
+      // create buy 0.5
+      await this.tryBuyFeature(
+        tickerPrice,
+        '0.382',
+        session,
+        '0.5',
+        '0.382',
+        '1.618',
+      );
+
+      // create buy 0.618
+      await this.tryBuyFeature(
+        tickerPrice,
+        '0.5',
+        session,
+        '0.618',
+        '0.5',
+        '1.618',
+      );
     }
 
     await this.strategySessionsEntityService.baseUpdate(session.id, {
@@ -230,6 +179,29 @@ export class DhmStrategyProcessService {
   //     return null;
   //   }
   // }
+
+  private async tryBuyFeature(
+    tickerPrice: any,
+    buyLevel: string,
+    session: any,
+    level: string,
+    profitLevel: string,
+    stopLevel: string,
+  ) {
+    // if current ticker price bellow buy level and order still isn't exist
+    if (
+      this.getFib(session, buyLevel) >= tickerPrice &&
+      ['waiting', 'triggered'].includes(session.status) &&
+      !session.data.orders.buy?.[level]?.id
+    ) {
+      session.data.orders.buy[level] = await this.buyFeature(
+        session,
+        level,
+        profitLevel,
+        stopLevel,
+      );
+    }
+  }
 
   private async buyFeature(
     session: any,
@@ -307,7 +279,7 @@ export class DhmStrategyProcessService {
     }
   }
 
-  private async recreateOrders(session: any) {
+  private async recreateOrders(session: any, tickerPrice: any) {
     console.log('recreate');
     await this.tryCancelByLevel(session, '0.5');
     await this.tryCancelByLevel(session, '0.618');
@@ -316,39 +288,26 @@ export class DhmStrategyProcessService {
     session.data.orders.buy = {};
 
     // create buy 0.5
-    //if (Number(balances) >= this.ORDER_VALUE) {
-    console.log(`start add buy feature 0.5`);
-    session.data.orders.buy['0.5'] = await this.buyFeature(
+    await this.tryBuyFeature(
+      tickerPrice,
+      '0.382',
       session,
       '0.5',
       '0.382',
       '1.618',
     );
-    console.log(`add buy feature 0.5`);
-    //}
 
-    //if (Number(balances) >= this.ORDER_VALUE) {
-    console.log(`start add buy feature 0.618`);
-    session.data.orders.buy['0.618'] = await this.buyFeature(
+    // create buy 0.618
+    await this.tryBuyFeature(
+      tickerPrice,
+      '0.5',
       session,
       '0.618',
       '0.5',
       '1.618',
     );
-    console.log(`add buy feature 0.618`);
-    //}
   }
 
-  // private async cancel(symbol, options) {
-  //   try {
-  //     // await here because neet to catch error
-  //     const res = await this.mexcService.cancelOrder(symbol, options);
-  //     return res;
-  //   } catch (e) {
-  //     console.log(e);
-  //     return null;
-  //   }
-  // }
   private async cancel(symbol, options) {
     symbol = symbol.replace('USDT', '/USDT:USDT');
     try {
