@@ -122,7 +122,7 @@ export class DhmStrategyProcessService {
       // create buy 0.618
       await this.tryBuyFeature(
         tickerPrice,
-        '0.318',
+        '0.382',
         session,
         '0.618',
         '0.5',
@@ -300,7 +300,7 @@ export class DhmStrategyProcessService {
     // create buy 0.618
     await this.tryBuyFeature(
       tickerPrice,
-      '0.318',
+      '0.382',
       session,
       '0.618',
       '0.5',
