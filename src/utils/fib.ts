@@ -58,4 +58,6 @@ export function getFibRetracement(...values: unknown[]) {
  * Levels.
  */
 
-export const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.768, 0.86, 1, 1.618, 2.414];
+export const levels = [
+  0, 0.236, 0.382, 0.5, 0.618, 0.768, 0.86, 1, 1.618, 2.414,
+];
