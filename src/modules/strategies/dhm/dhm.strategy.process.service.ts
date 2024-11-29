@@ -225,7 +225,7 @@ export class DhmStrategyProcessService {
         },
       });
 
-      //await exchange.setMarginMode('ISOLATED', symbol, { leverage: 10 });
+      await exchange.setMarginMode('ISOLATED', symbol, { leverage: 10 });
 
       // Дополнительные параметры, специфичные для Bybit
       const params = {
