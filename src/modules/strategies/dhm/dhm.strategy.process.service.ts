@@ -77,7 +77,7 @@ export class DhmStrategyProcessService {
     }
 
     if (
-      this.getFib(session, '0.5') >= tickerPrice &&
+      this.getFib(session, '0.49') >= tickerPrice &&
       session.status === 'waiting'
     ) {
       session.status = 'triggered';
@@ -97,7 +97,7 @@ export class DhmStrategyProcessService {
       if (session.status === 'triggered') {
         if (this.getFib(session, '0.382') <= tickerPrice) {
           // if price didn't come to 0.618 and up to 0.382 we close feature of 0.618
-          await this.tryCancelByLevel(session, '0.618');
+          await this.tryCancelByLevel(session, '0.608');
           // if price up to 0.382 we finish the session
           session.status = 'finished';
           console.log(`set finished`);
@@ -113,7 +113,7 @@ export class DhmStrategyProcessService {
         tickerPrice,
         '0.236',
         session,
-        '0.5',
+        '0.49',
         '0.382',
         '1.618',
       );
@@ -123,7 +123,7 @@ export class DhmStrategyProcessService {
         tickerPrice,
         '0.382',
         session,
-        '0.618',
+        '0.608',
         '0.5',
         '1.618',
       );
@@ -281,8 +281,8 @@ export class DhmStrategyProcessService {
 
   private async recreateOrders(session: any, tickerPrice: any) {
     console.log('recreate');
-    await this.tryCancelByLevel(session, '0.5');
-    await this.tryCancelByLevel(session, '0.618');
+    await this.tryCancelByLevel(session, '0.49');
+    await this.tryCancelByLevel(session, '0.608');
 
     // clear orders data
     session.data.orders.buy = {};
@@ -292,7 +292,7 @@ export class DhmStrategyProcessService {
       tickerPrice,
       '0.236',
       session,
-      '0.5',
+      '0.49',
       '0.382',
       '1.618',
     );
@@ -302,7 +302,7 @@ export class DhmStrategyProcessService {
       tickerPrice,
       '0.382',
       session,
-      '0.618',
+      '0.608',
       '0.5',
       '1.618',
     );
