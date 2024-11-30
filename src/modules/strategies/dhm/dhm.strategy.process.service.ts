@@ -231,6 +231,7 @@ export class DhmStrategyProcessService {
       const params = {
         stop_loss: this.getFib(session, stopLevel),
         take_profit: this.getFib(session, profitLevel),
+        post_only: true,
         // tp_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания TP
         // sl_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания SL
         // time_in_force: 'GoodTillCancel', // Время действия ордера
