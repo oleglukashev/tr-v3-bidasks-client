@@ -51,6 +51,7 @@ export class DhmStrategyProcessService {
     const tickerPrice = await this.redis.get(
       `${this.argv.tradingServiceId}:${this.argv.pairId}:${this.argv.type}`,
     );
+    console.log(`current price of ${session.symbol}: ${tickerPrice}`);
     // const usdAssetName = session.pair.symbol.includes('USDT')
     //   ? 'USDT'
     //   : 'USDC';
@@ -231,7 +232,7 @@ export class DhmStrategyProcessService {
       const params = {
         stop_loss: this.getFib(session, stopLevel),
         take_profit: this.getFib(session, profitLevel),
-        post_only: true,
+        //post_only: true,
         // tp_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания TP
         // sl_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания SL
         // time_in_force: 'GoodTillCancel', // Время действия ордера
