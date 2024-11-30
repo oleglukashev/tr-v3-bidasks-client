@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import currencyjs from 'currency.js';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 import { getFibRetracement } from '../../../utils/fib';
-import { MexcService } from '../../trading-services/mexc/mexc.service';
 import { nowTs } from '../../../utils/time';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
@@ -13,7 +12,6 @@ import { bybit } from 'ccxt';
 export class DhmStrategyProcessService {
   constructor(
     private readonly strategySessionsEntityService: StrategySessionsEntityService,
-    private readonly mexcService: MexcService,
     @InjectRedis('priceDb') private readonly redis: Redis,
   ) {}
 

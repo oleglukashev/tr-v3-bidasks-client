@@ -5,8 +5,6 @@ import { StrategySessionsEntityService } from '../../entity-services/strategy-se
 import { KlinesEntityService } from '../../entity-services/klines-entity-service';
 import { DhmStrategyProcessCronService } from './dhm.strategy.process.cron.service';
 // import { StrategySessionTrxsEntityService } from '../../entity-services/strategy-session-trxs-entity-service';
-import { MexcModule } from '../../trading-services/mexc/mexc.module';
-import { MexcService } from '../../trading-services/mexc/mexc.service';
 import { DhmStrategyDetectService } from './dhm.strategy.detect.service';
 import { DhmStrategyProcessService } from './dhm.strategy.process.service';
 // import { BalanceTrxsEntityService } from '../../entity-services/balance-trxs-entity-service';
@@ -15,7 +13,7 @@ import { DhmStrategyProcessService } from './dhm.strategy.process.service';
 // import { HistoryStrategySessionsEntityService } from '../../entity-services/history-strategy-sessions-entity-service';
 
 @Module({
-  imports: [MexcModule],
+  imports: [],
   providers: [
     PrismaService,
     KlinesEntityService,
@@ -27,7 +25,6 @@ import { DhmStrategyProcessService } from './dhm.strategy.process.service';
     DhmStrategyDetectService,
     DhmStrategyProcessService,
     //DhmStrategyHistoryProcessService,
-    MexcService,
     //BalancesEntityService,
     //BalanceTrxsEntityService,
   ],

@@ -31,13 +31,13 @@ import { RedisModule } from '@nestjs-modules/ioredis';
       'sessionDb',
     ),
     ScheduleModule.forRoot(),
-    BullModule.forRoot({
-      prefix: 'tr-v2',
-      redis: {
-        host: 'localhost',
-        port: 6379,
-      },
-    }),
+    // BullModule.forRoot({
+    //   prefix: 'tr-v2',
+    //   redis: {
+    //     host: 'localhost',
+    //     port: 6379,
+    //   },
+    // }),
     // Strategies
     DhmStrategyModule,
   ],
