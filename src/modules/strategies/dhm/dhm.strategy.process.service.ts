@@ -17,7 +17,7 @@ export class DhmStrategyProcessService {
 
   readonly argv: any = yargs.argv;
   readonly FINISH_IN_MS = 3 * 24 * 60 * 60 * 1000;
-  readonly ORDER_VALUE = 100;
+  readonly ORDER_VALUE = 1000;
 
   async process(allowMakeTrxs = true) {
     console.log('start', nowTs());
