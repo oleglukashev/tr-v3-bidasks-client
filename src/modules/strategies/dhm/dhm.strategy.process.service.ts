@@ -115,7 +115,7 @@ export class DhmStrategyProcessService {
         session,
         '0.49',
         '0.382',
-        '1.618',
+        '2.414',
       );
 
       // create buy 0.618
@@ -125,7 +125,7 @@ export class DhmStrategyProcessService {
         session,
         '0.608',
         '0.5',
-        '1.618',
+        '2.414',
       );
     }
 
@@ -294,7 +294,7 @@ export class DhmStrategyProcessService {
       session,
       '0.49',
       '0.382',
-      '1.618',
+      '2.414',
     );
 
     // create buy 0.618
@@ -304,7 +304,7 @@ export class DhmStrategyProcessService {
       session,
       '0.608',
       '0.5',
-      '1.618',
+      '2.414',
     );
   }
 
