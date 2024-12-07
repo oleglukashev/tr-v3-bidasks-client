@@ -49,9 +49,11 @@ export class DhmStrategyProcessService {
     const tickerPrice = await this.redis.get(
       `${this.argv.tradingServiceId}:${this.argv.pairId}:${this.argv.type}`,
     );
-    const balance = await this.redis.get(`${this.argv.tradingServiceId}:balance:USDT`);
-    console.log(balance);
+    const balance = await this.redis.get(
+      `${this.argv.tradingServiceId}:balance:USDT`,
+    );
     console.log(`current price of ${session.pair.symbol}: ${tickerPrice}`);
+    console.log(`current balance USDT: ${balance}`);
     // const usdAssetName = session.pair.symbol.includes('USDT')
     //   ? 'USDT'
     //   : 'USDC';
@@ -74,7 +76,7 @@ export class DhmStrategyProcessService {
 
       if (allowMakeTrxs) {
         // recreate previous orders
-        await this.recreateOrders(session, tickerPrice);
+        await this.recreateOrders(session, tickerPrice, balance);
       }
     }
 
@@ -118,6 +120,7 @@ export class DhmStrategyProcessService {
         '0.49',
         '0.382',
         '2.414',
+        balance,
       );
 
       // create buy 0.618
@@ -128,6 +131,7 @@ export class DhmStrategyProcessService {
         '0.608',
         '0.5',
         '2.414',
+        balance,
       );
     }
 
@@ -188,12 +192,14 @@ export class DhmStrategyProcessService {
     level: string,
     profitLevel: string,
     stopLevel: string,
+    balance: string,
   ) {
     // if current ticker price bellow buy level and order still isn't exist
     if (
       this.getFib(session, buyLevel) >= tickerPrice &&
       ['waiting', 'triggered'].includes(session.status) &&
-      !session.data.orders.buy?.[level]?.id
+      !session.data.orders.buy?.[level]?.id &&
+      parseFloat(balance) > 100
     ) {
       session.data.orders.buy[level] = await this.buyFeature(
         session,
@@ -281,7 +287,7 @@ export class DhmStrategyProcessService {
     }
   }
 
-  private async recreateOrders(session: any, tickerPrice: any) {
+  private async recreateOrders(session: any, tickerPrice: any, balance: any) {
     console.log('recreate');
     await this.tryCancelByLevel(session, '0.49');
     await this.tryCancelByLevel(session, '0.608');
@@ -297,6 +303,7 @@ export class DhmStrategyProcessService {
       '0.49',
       '0.382',
       '2.414',
+      balance,
     );
 
     // create buy 0.618
@@ -307,6 +314,7 @@ export class DhmStrategyProcessService {
       '0.608',
       '0.5',
       '2.414',
+      balance,
     );
   }
 
