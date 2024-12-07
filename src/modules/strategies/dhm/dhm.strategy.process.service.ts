@@ -49,6 +49,8 @@ export class DhmStrategyProcessService {
     const tickerPrice = await this.redis.get(
       `${this.argv.tradingServiceId}:${this.argv.pairId}:${this.argv.type}`,
     );
+    const balance = await this.redis.get(`${this.argv.tradingServiceId}:balance:USDT`);
+    console.log(balance);
     console.log(`current price of ${session.pair.symbol}: ${tickerPrice}`);
     // const usdAssetName = session.pair.symbol.includes('USDT')
     //   ? 'USDT'
