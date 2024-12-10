@@ -17,7 +17,9 @@ export class DhmStrategyProcessService {
 
   readonly argv: any = yargs.argv;
   readonly FINISH_IN_MS = 3 * 24 * 60 * 60 * 1000;
-  readonly ORDER_VALUE = 1000;
+  readonly LEVEREDGE = 3;
+  readonly ORDER_SIZE = 10;
+  readonly ORDER_VALUE = this.ORDER_SIZE * this.LEVEREDGE;
 
   async process(allowMakeTrxs = true) {
     console.log('start', nowTs());
@@ -232,7 +234,7 @@ export class DhmStrategyProcessService {
         },
       });
 
-      await exchange.setMarginMode('isolated', symbol, { leverage: 10 });
+      await exchange.setMarginMode('isolated', symbol, { leverage: this.LEVEREDGE });
 
       // Дополнительные параметры, специфичные для Bybit
       const params = {
