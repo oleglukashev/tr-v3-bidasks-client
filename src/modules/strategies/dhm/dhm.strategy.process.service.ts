@@ -201,7 +201,7 @@ export class DhmStrategyProcessService {
       this.getFib(session, buyLevel) >= tickerPrice &&
       ['waiting', 'triggered'].includes(session.status) &&
       !session.data.orders.buy?.[level]?.id &&
-      parseFloat(balance) > 100
+      parseFloat(balance) > this.ORDER_SIZE
     ) {
       session.data.orders.buy[level] = await this.buyFeature(
         session,
