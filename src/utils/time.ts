@@ -1,5 +1,7 @@
 import moment from 'moment';
 
+export const msInHour = 3600000;
+
 export function nowTs() {
   return moment().utc().valueOf();
 }

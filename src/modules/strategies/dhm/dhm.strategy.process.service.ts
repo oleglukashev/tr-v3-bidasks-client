@@ -148,6 +148,7 @@ export class DhmStrategyProcessService {
   private async activeSession() {
     return this.strategySessionsEntityService.findFirst({
       where: {
+        type: { equals: 'dhm' },
         status: { in: ['waiting', 'triggered'] },
         pairId: parseInt(this.argv.pairId),
       },
@@ -234,7 +235,9 @@ export class DhmStrategyProcessService {
         },
       });
 
-      await exchange.setMarginMode('isolated', symbol, { leverage: this.LEVEREDGE });
+      await exchange.setMarginMode('isolated', symbol, {
+        leverage: this.LEVEREDGE,
+      });
 
       // Дополнительные параметры, специфичные для Bybit
       const params = {

@@ -19,6 +19,7 @@ Table pairs {
   currentTs BigInt [not null, default: 0]
   activated Boolean [not null, default: true]
   klines klines [not null]
+  orders orders [not null]
   strategySessions strategy_sessions [not null]
   historyStrategySessions history_strategy_sessions [not null]
   tradingServiceId Int [not null]
@@ -30,6 +31,19 @@ Table pairs {
     (name, tradingServiceId) [unique]
     (symbol, tradingServiceId) [unique]
   }
+}
+
+Table orders {
+  id String [pk]
+  status String
+  orderType String
+  stopOrderType String
+  side String [not null, default: 'buy']
+  data Json [not null, default: '{}']
+  pairId Int [not null]
+  pair pairs [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
 }
 
 Table klines {
@@ -83,6 +97,7 @@ Table strategy_sessions {
   id Int [pk, increment]
   status String [not null, default: 'waiting']
   data Json [not null, default: '{}']
+  type String [not null, default: 'dhm']
   pairId Int [not null]
   pair pairs [not null]
   trxs strategy_session_trxs [not null]
@@ -119,6 +134,8 @@ Table strategy_session_trxs {
 }
 
 Ref: pairs.tradingServiceId > trading_services.id [delete: Restrict]
+
+Ref: orders.pairId > pairs.id [delete: Restrict]
 
 Ref: klines.pairId > pairs.id [delete: Restrict]
 

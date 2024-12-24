@@ -37,6 +37,7 @@ model Pair {
   activated Boolean @default(true)
 
   klines                  Kline[]
+  orders                  Order[]
   strategySessions        StrategySession[]
   historyStrategySessions HistoryStrategySession[]
 
@@ -49,6 +50,23 @@ model Pair {
   @@unique([name, tradingServiceId])
   @@unique([symbol, tradingServiceId])
   @@map("pairs")
+}
+
+model Order {
+  id            String  @id @unique @default(uuid())
+  status        String?
+  orderType     String? @map("order_type")
+  stopOrderType String? @map("stop_order_type")
+  side          String  @default("buy")
+  data          Json    @default("{}")
+
+  pairId Int  @map("pair_id")
+  pair   Pair @relation(fields: [pairId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("orders")
 }
 
 model Kline {
@@ -117,6 +135,7 @@ model StrategySession {
   id     Int    @id @default(autoincrement())
   status String @default("waiting")
   data   Json   @default("{}")
+  type   String @default("dhm")
 
   pairId Int  @map("pair_id")
   pair   Pair @relation(fields: [pairId], references: [id], onDelete: Restrict)
