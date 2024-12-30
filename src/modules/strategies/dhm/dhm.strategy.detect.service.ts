@@ -49,7 +49,10 @@ export class DhmStrategyDetectService {
         where: {
           AND: [
             {
-              pairId: kline2.pairId,
+              type: { equals: 'dhm' },
+            },
+            {
+              pairId: { equals: kline2.pairId },
             },
             {
               data: {
@@ -71,6 +74,7 @@ export class DhmStrategyDetectService {
       await this.strategySessionsEntityService.baseCreate({
         pairId: kline1.pairId,
         startTs: kline1.ts,
+        type: 'dhm',
         data: {
           kline1Id: kline1.id,
           kline2Id: kline2.id,

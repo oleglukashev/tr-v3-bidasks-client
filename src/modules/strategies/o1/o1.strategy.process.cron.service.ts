@@ -10,6 +10,6 @@ export class O1StrategyProcessCronService {
 
   @Cron('*/3 * * * * *')
   async handleCron() {
-    await this.o1StrategyProcessService.process(true);
+    //await this.o1StrategyProcessService.process(true);
   }
 }

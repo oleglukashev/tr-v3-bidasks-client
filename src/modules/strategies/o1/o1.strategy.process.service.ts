@@ -3,15 +3,18 @@ import currencyjs from 'currency.js';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 import { msInHour, nowTs } from '../../../utils/time';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { getFibRetracement } from '../../../utils/fib';
 import Redis from 'ioredis';
 import * as yargs from 'yargs';
 import { bybit } from 'ccxt';
 import { bodySizeByDiv, direction } from '../../../utils/kline';
+import { OrdersEntityService } from '../../entity-services/orders-entity-service';
 
 @Injectable()
 export class O1StrategyProcessService {
   constructor(
     private readonly strategySessionsEntityService: StrategySessionsEntityService,
+    private readonly ordersEntityService: OrdersEntityService,
     @InjectRedis('priceDb') private readonly redis: Redis,
   ) {}
 
@@ -32,6 +35,9 @@ export class O1StrategyProcessService {
     if (!session) {
       return;
     }
+
+    const limitOrder = await this.openedLimitOrder(session);
+    const stopLossOrder = await this.openedStopLossOrder(session);
 
     // for (const session of sessions) {
     const tickerPrice = await this.redis.get(
@@ -67,23 +73,52 @@ export class O1StrategyProcessService {
 
     if (direction(session.data.kline) === 'up') {
       if (isTheNextHourAfterInitKline) {
-        if (parseFloat(tickerPrice) < halfKlineBodyPrice) {
+        if (
+          parseFloat(tickerPrice) < halfKlineBodyPrice &&
+          session.status === 'triggered'
+        ) {
           // remove order if order is exist
           session.status = 'cancelled';
           console.log(`set cancelled`);
         }
       } else {
+        if (limitOrder) {
+          await this.editFeatureStopLoss(
+            limitOrder,
+            this.getFib(session, '1.618'),
+          );
+        } else if (stopLossOrder) {
+          await this.editFeatureStopLoss(
+            stopLossOrder,
+            this.getFib(session, '1.618'),
+            'StopLoss',
+          );
+        }
         // check and move SL to 1.618
       }
     } else {
       if (isTheNextHourAfterInitKline) {
-        if (parseFloat(tickerPrice) > halfKlineBodyPrice) {
+        if (
+          parseFloat(tickerPrice) > halfKlineBodyPrice &&
+          session.status === 'triggered'
+        ) {
           // remove order if order is exist
           session.status = 'cancelled';
           console.log(`set cancelled`);
         }
       } else {
-        // check and move SL to 1.618
+        if (limitOrder) {
+          await this.editFeatureStopLoss(
+            limitOrder,
+            this.getFib(session, '1.618'),
+          );
+        } else if (stopLossOrder) {
+          await this.editFeatureStopLoss(
+            stopLossOrder,
+            this.getFib(session, '1.618'),
+            'StopLoss',
+          );
+        }
       }
     }
 
@@ -131,10 +166,10 @@ export class O1StrategyProcessService {
     // if current ticker price bellow buy level and order still isn't exist
     if (
       ['waiting', 'triggered'].includes(session.status) &&
-      !session.data.orders.buy?.id &&
+      !session.data.order.id &&
       parseFloat(balance) > this.ORDER_SIZE
     ) {
-      session.data.orders.buy = await this.buyFeature(
+      session.data.order = await this.buyFeature(
         session,
         price.toString(),
         tpPrice.toString(),
@@ -170,9 +205,9 @@ export class O1StrategyProcessService {
 
       // Дополнительные параметры, специфичные для Bybit
       const params = {
-        stop_loss: slPricePrice,
-        take_profit: tpPrice,
-        post_only: true,
+        stopLoss: slPricePrice,
+        takeProfit: tpPrice,
+        //post_only: true,
         // tp_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания TP
         // sl_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания SL
         // time_in_force: 'GoodTillCancel', // Время действия ордера
@@ -181,7 +216,7 @@ export class O1StrategyProcessService {
       const order = await exchange.createOrder(
         symbol,
         'limit',
-        'buy',
+        session.data.direction === 'up' ? 'buy' : 'sell',
         quantity,
         parseFloat(price),
         params,
@@ -195,17 +230,12 @@ export class O1StrategyProcessService {
     }
   }
 
-  private async tryCancelByLevel(session: any) {
-    if (session.data.orders.buy?.id) {
-      await this.cancel(session.pair.symbol, {
-        id: session.data.orders.buy.id,
-      });
-      console.log(`cancel order`);
-    }
-  }
-
-  private async cancel(symbol, options) {
-    symbol = symbol.replace('USDT', '/USDT:USDT');
+  private async editFeatureStopLoss(
+    order: any,
+    slPricePrice: string,
+    type?: string,
+  ) {
+    const symbol = order.symbol;
     try {
       // await here because neet to catch error
       const exchange = new bybit({
@@ -215,19 +245,123 @@ export class O1StrategyProcessService {
           defaultType: 'future', // Указываем, что будем работать с фьючерсами
         },
       });
-      const res = await exchange.cancelOrder(options.id, symbol);
-      return res;
+
+      // Дополнительные параметры, специфичные для Bybit
+      const params: any = {
+        //stopLoss: slPricePrice,
+        //post_only: true,
+        // tp_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания TP
+        // sl_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания SL
+        // time_in_force: 'GoodTillCancel', // Время действия ордера
+      };
+
+      if (type === 'StopLoss') {
+        params.stopLossPrice = slPricePrice;
+      } else {
+        params.stopLoss = slPricePrice;
+      }
+
+      const updatedOrder = await exchange.editOrder(
+        order.id,
+        symbol,
+        'limit',
+        order.side,
+        order.amount,
+        undefined,
+        params,
+      );
+      console.log('Ордер с TP/SL успешно обновлен:', updatedOrder);
+      return order;
     } catch (e) {
       console.log(e);
+      console.log('error');
       return null;
     }
   }
 
+  // private async tryCancelByLevel(session: any) {
+  //   if (session.data.order.id) {
+  //     await this.cancel(session.pair.symbol, {
+  //       id: session.data.order.id,
+  //     });
+  //     console.log(`cancel order`);
+  //   }
+  // }
+
+  // private async cancel(symbol, options) {
+  //   symbol = symbol.replace('USDT', '/USDT:USDT');
+  //   try {
+  //     // await here because neet to catch error
+  //     const exchange = new bybit({
+  //       apiKey: 'OPjbJFSBIP48EDZ6GU',
+  //       secret: 'XYcAvOJcrWZc99Z9LthHu9txnjLVKxOAkaiQ',
+  //       options: {
+  //         defaultType: 'future', // Указываем, что будем работать с фьючерсами
+  //       },
+  //     });
+  //     const res = await exchange.cancelOrder(options.id, symbol);
+  //     return res;
+  //   } catch (e) {
+  //     console.log(e);
+  //     return null;
+  //   }
+  // }
+
   private tryInitSessionData(session: any) {
-    if (!session.data?.orders) {
-      session.data.orders = {
-        buy: {},
-      };
+    if (!session.data?.order) {
+      session.data.order = {};
     }
+  }
+
+  private async openedLimitOrder(session: any) {
+    // if no saved order id in data then now was order saved
+    if (!session?.data?.order?.id) {
+      return;
+    }
+    return this.ordersEntityService.findFirst({
+      where: {
+        id: { equals: session.data.order.id },
+        orderType: { equals: 'Limit' },
+        status: { equals: 'open' },
+        pairId: { equals: parseInt(this.argv.pairId) },
+        side: {
+          equals: direction(session.data.kline) === 'up' ? 'buy' : 'sell',
+        },
+      },
+    });
+  }
+
+  private async openedStopLossOrder(session: any) {
+    // if no saved order id in data then now was order saved
+    if (!session?.data?.order?.id) {
+      return;
+    }
+    return this.ordersEntityService.findFirst({
+      where: {
+        orderType: { equals: 'Market' },
+        stopOrderType: { equals: 'StopLoss' },
+        status: { equals: 'open' },
+        pairId: { equals: parseInt(this.argv.pairId) },
+        side: {
+          // side is oposit of limit order
+          equals: direction(session.data.kline) === 'up' ? 'sell' : 'buy',
+        },
+      },
+    });
+  }
+
+  private getFib(session, key: string) {
+    return getFibRetracement({
+      levels: {
+        0:
+          session.data.direction === 'up'
+            ? session.data.high
+            : session.data.low,
+        1:
+          session.data.direction === 'up'
+            ? session.data.low
+            : session.data.high,
+      },
+    })[key].toString();
   }
 }

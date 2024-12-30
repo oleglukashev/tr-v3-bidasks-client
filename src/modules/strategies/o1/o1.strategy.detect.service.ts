@@ -60,6 +60,7 @@ export class O1StrategyDetectService {
           kline: kline,
           low: kline.low,
           high: kline.high,
+          direction: direction(kline),
         },
       });
     }

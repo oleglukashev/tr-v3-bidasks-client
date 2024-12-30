@@ -4,9 +4,10 @@ import { StrategiesEntityService } from './modules/entity-services/strategies-en
 import { StrategySessionsEntityService } from './modules/entity-services/strategy-sessions-entity-service';
 import { PrismaService } from './prisma.service';
 import { ScheduleModule } from '@nestjs/schedule';
-import { BullModule } from '@nestjs/bull';
 import { DhmStrategyModule } from './modules/strategies/dhm/dhm.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { O1StrategyModule } from "./modules/strategies/o1/o1.module";
+import { OrdersEntityService } from "./modules/entity-services/orders-entity-service";
 
 @Module({
   imports: [
@@ -40,12 +41,14 @@ import { RedisModule } from '@nestjs-modules/ioredis';
     // }),
     // Strategies
     DhmStrategyModule,
+    //O1StrategyModule,
   ],
   controllers: [],
   providers: [
     PrismaService,
     //Entity
     PairsEntityService,
+    OrdersEntityService,
     StrategiesEntityService,
     StrategySessionsEntityService,
   ],
