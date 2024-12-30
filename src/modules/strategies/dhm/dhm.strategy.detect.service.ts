@@ -44,6 +44,11 @@ export class DhmStrategyDetectService {
       return;
     }
 
+    // profit should be more than $0.65 (from $100)
+    if (!this.isEnoughSetupSize(kline1.low, kline2.high)) {
+      return;
+    }
+
     const existStrategySession =
       await this.strategySessionsEntityService.findFirst({
         where: {
@@ -81,5 +86,9 @@ export class DhmStrategyDetectService {
         },
       });
     }
+  }
+
+  isEnoughSetupSize(low, high) {
+    return (low + ((high - low) * 0.5)) / (low + ((high - low) * 0.382)) > 1.0065;
   }
 }
