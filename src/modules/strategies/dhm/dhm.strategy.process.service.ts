@@ -202,7 +202,8 @@ export class DhmStrategyProcessService {
       this.getFib(session, buyLevel) >= tickerPrice &&
       ['waiting', 'triggered'].includes(session.status) &&
       !session.data.orders.buy?.[level]?.id &&
-      parseFloat(balance) > this.ORDER_SIZE
+      parseFloat(balance) > this.ORDER_SIZE &&
+      this.isEnoughSetupSizeToBuy(session)
     ) {
       session.data.orders.buy[level] = await this.buyFeature(
         session,
@@ -349,5 +350,13 @@ export class DhmStrategyProcessService {
         1: session.data.low,
       },
     })[key].toString();
+  }
+
+  private isEnoughSetupSizeToBuy(session) {
+    return (
+      (session.data.low + (session.data.high - session.data.low) * 0.5) /
+        (session.data.low + (session.data.high - session.data.low) * 0.382) >
+      1.0065
+    );
   }
 }
