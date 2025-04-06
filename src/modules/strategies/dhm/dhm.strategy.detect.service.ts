@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 import { getFibRetracement } from '../../../utils/fib';
 import { KlinesEntityService } from '../../entity-services/klines-entity-service';
+import { direction } from '../../../utils/kline';
 
 @Injectable()
 export class DhmStrategyDetectService {
@@ -10,7 +11,7 @@ export class DhmStrategyDetectService {
     private readonly klinesEntityService: KlinesEntityService,
   ) {}
 
-  async detect(klineId, test = false) {
+  async detect(klineId, followDirection = null) {
     const kline2 = await this.klinesEntityService.findFirst({
       where: { id: klineId },
     });
@@ -28,21 +29,46 @@ export class DhmStrategyDetectService {
       return;
     }
 
+    if (
+      followDirection &&
+      (kline1.direction !== followDirection ||
+        kline2.direction !== followDirection)
+    ) {
+      console.log('one of kline has wrong direction');
+      return;
+    }
+
     await this.searchSecondKline(kline1, kline2);
   }
 
   async searchSecondKline(kline1, kline2) {
-    if (kline2.high <= kline1.high) {
-      return;
-    }
-
-    const fib = getFibRetracement({
+    const kline1Fib = getFibRetracement({
       levels: { 0: kline1.high, 1: kline1.low },
     });
-
-    if (fib['0.5'] > kline2.low) {
-      return;
+    const directionValue = direction(kline1);
+    // direction - up
+    if (kline2.high > kline1.high) {
+      if (kline1Fib['0.5'] > kline2.low) {
+        return;
+      }
+      // direction - down
+    } else {
+      if (kline1Fib['0.5'] < kline2.low) {
+        return;
+      }
     }
+
+    // if (kline2.high <= kline1.high) {
+    //   return;
+    // }
+
+    // const fib = getFibRetracement({
+    //   levels: { 0: kline1.high, 1: kline1.low },
+    // });
+
+    // if (fib['0.5'] > kline2.low) {
+    //   return;
+    // }
 
     const existStrategySession =
       await this.strategySessionsEntityService.findFirst({
@@ -50,8 +76,7 @@ export class DhmStrategyDetectService {
           AND: [
             {
               type: { equals: 'dhm' },
-            },
-            {
+              direction: directionValue,
               pairId: { equals: kline2.pairId },
             },
             {
@@ -75,13 +100,14 @@ export class DhmStrategyDetectService {
         pairId: kline1.pairId,
         startTs: kline1.ts,
         type: 'dhm',
+        direction: directionValue,
         data: {
           kline1Id: kline1.id,
           kline2Id: kline2.id,
           kline1: kline1,
           kline2: kline2,
-          low: kline1.low,
-          high: kline2.high,
+          low: directionValue === 'up' ? kline1.low : kline1.high,
+          high: directionValue === 'up' ? kline2.high : kline2.low,
         },
       });
     }

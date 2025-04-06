@@ -98,6 +98,7 @@ Table strategy_sessions {
   status String [not null, default: 'waiting']
   data Json [not null, default: '{}']
   type String [not null, default: 'dhm']
+  direction String [not null, default: 'up']
   pairId Int [not null]
   pair pairs [not null]
   trxs strategy_session_trxs [not null]

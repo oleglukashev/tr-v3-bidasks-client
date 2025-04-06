@@ -20,16 +20,21 @@ export class DhmStrategyProcessService {
   readonly LEVEREDGE = 3;
   readonly ORDER_SIZE = 10;
   readonly ORDER_VALUE = this.ORDER_SIZE * this.LEVEREDGE;
+  readonly EXIT_LEVEL = '1.618';
 
-  async process(allowMakeTrxs = true) {
+  async process(allowMakeTrxs = true, direction = null) {
     console.log('start', nowTs());
-    await this.check(allowMakeTrxs);
+    await this.check(allowMakeTrxs, direction);
     console.log('end', nowTs());
   }
 
-  private async check(allowMakeTrxs = true) {
+  private async check(allowMakeTrxs = true, direction = null) {
     const session = await this.activeSession();
     if (!session) {
+      return;
+    }
+
+    if (direction && session.direction !== direction) {
       return;
     }
     // let account;
@@ -72,7 +77,11 @@ export class DhmStrategyProcessService {
     }
 
     // update high and recreate orders if status is waiting and price is higher
-    if (session.status === 'waiting' && tickerPrice > session.data.high) {
+    const priceCondition =
+      session.direction === 'up'
+        ? tickerPrice > session.data.high
+        : tickerPrice < session.data.high;
+    if (session.status === 'waiting' && priceCondition) {
       session.data.high = tickerPrice;
       console.log(`set new high`);
 
@@ -82,10 +91,7 @@ export class DhmStrategyProcessService {
       }
     }
 
-    if (
-      this.getFib(session, '0.49') >= tickerPrice &&
-      session.status === 'waiting'
-    ) {
+    if (this.fibLevelIsTriggered(session, tickerPrice, '0.49')) {
       session.status = 'triggered';
       console.log(`set triggered`);
     }
@@ -101,7 +107,7 @@ export class DhmStrategyProcessService {
 
     if (allowMakeTrxs) {
       if (session.status === 'triggered') {
-        if (this.getFib(session, '0.382') <= tickerPrice) {
+        if (!this.fibLevelIsTriggered(session, tickerPrice, '0.382')) {
           // if price didn't come to 0.618 and up to 0.382 we close feature of 0.618
           await this.tryCancelByLevel(session, '0.608');
           // if price up to 0.382 we finish the session
@@ -109,30 +115,41 @@ export class DhmStrategyProcessService {
           console.log(`set finished`);
         }
 
-        if (this.getFib(session, '1.618') >= tickerPrice) {
-          // check stop loss
-        }
+        // if (this.fibLevelIsTriggered(session, tickerPrice, '1.618')) {
+        //   // check stop loss
+        // }
       }
 
-      // create buy 0.5
-      await this.tryBuyFeature(
+      // create 0.382
+      await this.tryCreateFeature(
+        tickerPrice,
+        '0.236',
+        session,
+        '0.382',
+        '0.236',
+        this.EXIT_LEVEL,
+        balance,
+      );
+
+      // create 0.5
+      await this.tryCreateFeature(
         tickerPrice,
         '0.236',
         session,
         '0.49',
         '0.382',
-        '2.414',
+        this.EXIT_LEVEL,
         balance,
       );
 
-      // create buy 0.618
-      await this.tryBuyFeature(
+      // create 0.618
+      await this.tryCreateFeature(
         tickerPrice,
         '0.382',
         session,
         '0.608',
         '0.5',
-        '2.414',
+        this.EXIT_LEVEL,
         balance,
       );
     }
@@ -188,24 +205,25 @@ export class DhmStrategyProcessService {
   //   }
   // }
 
-  private async tryBuyFeature(
+  private async tryCreateFeature(
     tickerPrice: any,
-    buyLevel: string,
+    enterLevel: string,
     session: any,
     level: string,
     profitLevel: string,
     stopLevel: string,
     balance: string,
   ) {
+    const key = session.direction === 'up' ? 'buy' : 'sell';
     // if current ticker price bellow buy level and order still isn't exist
     if (
-      this.getFib(session, buyLevel) >= tickerPrice &&
+      this.fibLevelIsTriggered(session, tickerPrice, enterLevel) &&
       ['waiting', 'triggered'].includes(session.status) &&
-      !session.data.orders.buy?.[level]?.id &&
-      parseFloat(balance) > this.ORDER_SIZE &&
-      this.isEnoughSetupSizeToBuy(session)
+      !session.data.orders?.[key]?.[level]?.id &&
+      parseFloat(balance) > this.ORDER_SIZE
+      //this.isEnoughSetupSizeToBuy(session)
     ) {
-      session.data.orders.buy[level] = await this.buyFeature(
+      session.data.orders[key][level] = await this.createFeature(
         session,
         level,
         profitLevel,
@@ -214,7 +232,7 @@ export class DhmStrategyProcessService {
     }
   }
 
-  private async buyFeature(
+  private async createFeature(
     session: any,
     level: string,
     profitLevel: string,
@@ -249,11 +267,11 @@ export class DhmStrategyProcessService {
         // sl_trigger_by: 'LastPrice', // Опционально, тип цены для срабатывания SL
         // time_in_force: 'GoodTillCancel', // Время действия ордера
       };
-
+      const key = session.direction === 'up' ? 'buy' : 'sell';
       const order = await exchange.createOrder(
         symbol,
         'limit',
-        'buy',
+        key,
         quantity,
         price,
         params,
@@ -285,9 +303,10 @@ export class DhmStrategyProcessService {
   // }
 
   private async tryCancelByLevel(session, level) {
-    if (session.data.orders.buy?.[level]?.id) {
+    const key = session.direction === 'up' ? 'buy' : 'sell';
+    if (session.data.orders?.[key]?.[level]?.id) {
       await this.cancel(session.pair.symbol, {
-        id: session.data.orders.buy[level].id,
+        id: session.data.orders?.[key]?.[level].id,
       });
       console.log(`cancel order ${level}`);
     }
@@ -295,31 +314,44 @@ export class DhmStrategyProcessService {
 
   private async recreateOrders(session: any, tickerPrice: any, balance: any) {
     console.log('recreate');
+    await this.tryCancelByLevel(session, '0.382');
     await this.tryCancelByLevel(session, '0.49');
     await this.tryCancelByLevel(session, '0.608');
 
     // clear orders data
-    session.data.orders.buy = {};
+    const key = session.direction === 'up' ? 'buy' : 'sell';
+    session.data.orders[key] = {};
 
-    // create buy 0.5
-    await this.tryBuyFeature(
+    // create 0.5
+    await this.tryCreateFeature(
+      tickerPrice,
+      '0.236',
+      session,
+      '0.382',
+      '0.236',
+      this.EXIT_LEVEL,
+      balance,
+    );
+
+    // create 0.5
+    await this.tryCreateFeature(
       tickerPrice,
       '0.236',
       session,
       '0.49',
       '0.382',
-      '2.414',
+      this.EXIT_LEVEL,
       balance,
     );
 
-    // create buy 0.618
-    await this.tryBuyFeature(
+    // create 0.618
+    await this.tryCreateFeature(
       tickerPrice,
       '0.382',
       session,
       '0.608',
       '0.5',
-      '2.414',
+      this.EXIT_LEVEL,
       balance,
     );
   }
@@ -358,5 +390,13 @@ export class DhmStrategyProcessService {
         (session.data.low + (session.data.high - session.data.low) * 0.382) >
       1.0065
     );
+  }
+
+  private fibLevelIsTriggered(session: any, tickerPrice: any, level: any) {
+    if (session.direction === 'up') {
+      return this.getFib(session, level) >= tickerPrice;
+    } else {
+      return this.getFib(session, level) <= tickerPrice;
+    }
   }
 }
