@@ -247,8 +247,8 @@ export class DhmStrategyProcessService {
     try {
       // await here because neet to catch error
       const exchange = new bybit({
-        apiKey: 'OPjbJFSBIP48EDZ6GU',
-        secret: 'XYcAvOJcrWZc99Z9LthHu9txnjLVKxOAkaiQ',
+        apiKey: process.env.API_KEY,
+        secret: process.env.API_SECRET,
         options: {
           defaultType: 'future', // Указываем, что будем работать с фьючерсами
         },
@@ -361,8 +361,8 @@ export class DhmStrategyProcessService {
     try {
       // await here because neet to catch error
       const exchange = new bybit({
-        apiKey: 'OPjbJFSBIP48EDZ6GU',
-        secret: 'XYcAvOJcrWZc99Z9LthHu9txnjLVKxOAkaiQ',
+        apiKey: process.env.API_KEY,
+        secret: process.env.API_SECRET,
         options: {
           defaultType: 'future', // Указываем, что будем работать с фьючерсами
         },
