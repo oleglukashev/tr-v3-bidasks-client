@@ -42,9 +42,6 @@ export class DhmStrategyDetectService {
   }
 
   async searchSecondKline(kline1, kline2) {
-    const kline1Fib = getFibRetracement({
-      levels: { 0: kline1.high, 1: kline1.low },
-    });
     const directionValue = direction(kline1);
     if (directionValue === 'up') {
       // direction - up
