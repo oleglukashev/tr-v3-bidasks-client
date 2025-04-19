@@ -31,8 +31,8 @@ export class DhmStrategyDetectService {
 
     if (
       followDirection &&
-      (kline1.direction !== followDirection ||
-        kline2.direction !== followDirection)
+      (direction(kline1) !== followDirection ||
+        direction(kline2) !== followDirection)
     ) {
       console.log('one of kline has wrong direction');
       return;
