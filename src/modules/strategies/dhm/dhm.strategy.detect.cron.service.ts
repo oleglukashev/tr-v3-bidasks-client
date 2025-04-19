@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as yargs from 'yargs';
 import { Cron } from '@nestjs/schedule';
-import { GeneralPrismaService } from '../../generalPrisma/generalPrisma.service';
+import { KlinesPrismaService } from '../../klinesPrisma/klinesPrisma.service';
 import { DhmStrategyDetectService } from './dhm.strategy.detect.service';
 import { startOfHourAgoTs, startOfHourTs } from '../../../utils/time';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
@@ -12,7 +12,7 @@ export class DhmStrategyDetectCronService {
   constructor(
     private readonly dhmStrategyDetectService: DhmStrategyDetectService,
     private readonly strategySessoinsEntityService: StrategySessionsEntityService,
-    private readonly prismaService: GeneralPrismaService,
+    private readonly klinesPrismaService: KlinesPrismaService,
   ) {}
 
   @Cron('*/5 * * * * *')
@@ -22,7 +22,7 @@ export class DhmStrategyDetectCronService {
     const argv: any = yargs.argv;
     const startCurrentHourTs = startOfHourAgoTs();
 
-    const pairsLastKlines: any = await this.prismaService.$queryRaw`
+    const pairsLastKlines: any = await this.klinesPrismaService.$queryRaw`
       SELECT k.id, k.low, k.high, k.ts
       FROM klines k
       INNER JOIN pairs p ON p.id = k.pair_id
