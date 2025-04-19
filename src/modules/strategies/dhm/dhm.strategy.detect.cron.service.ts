@@ -17,7 +17,8 @@ export class DhmStrategyDetectCronService {
 
   @Cron('*/5 * * * * *')
   async handleCron() {
-    const followDirection = 'down';
+    //const followDirection = 'down';
+    const followDirection = null;
     const argv: any = yargs.argv;
     const startCurrentHourTs = startOfHourAgoTs();
 

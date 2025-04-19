@@ -10,6 +10,6 @@ export class DhmStrategyProcessCronService {
 
   @Cron('*/15 * * * * *')
   async handleCron() {
-    await this.dhmStrategyProcessService.process(true, 'down');
+    await this.dhmStrategyProcessService.process(true, null);
   }
 }
