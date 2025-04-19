@@ -25,7 +25,7 @@ export class DhmStrategyDetectCronService {
       SELECT k.id, k.low, k.high, k.ts
       FROM klines k
       INNER JOIN pairs p ON p.id = k.pair_id
-      WHERE k.interval = 60 AND k.ts < ${startCurrentHourTs} AND k.pair_id = ${argv.pairId}::integer;
+      WHERE k.interval = 60 AND k.ts = ${startCurrentHourTs} AND k.pair_id = ${argv.pairId}::integer LIMIT 1;
     `;
     // INTERVAL 60m!!!!
 
