@@ -6,7 +6,8 @@ import {
   Enumerable,
   PostInclude,
 } from 'prisma';
-import { PrismaService } from '../../prisma.service';
+import { GeneralPrismaService } from '../generalPrisma/generalPrisma.service';
+import { KlinesPrismaService } from '../klinesPrisma/klinesPrisma.service';
 
 interface IFind {
   where?: UserWhereInput;
@@ -19,7 +20,7 @@ interface IFind {
 
 export class Base {
   constructor(
-    prismaService: PrismaService,
+    prismaService: GeneralPrismaService | KlinesPrismaService,
     private readonly prismaDomain: string,
   ) {
     this.prismaService = prismaService;
@@ -172,9 +173,7 @@ export class Base {
   }
 
   async pages(where): Promise<number> {
-    return Math.ceil(
-      (await this.countBy(where)) / Base.DEFAULT_PAGE_SIZE,
-    );
+    return Math.ceil((await this.countBy(where)) / Base.DEFAULT_PAGE_SIZE);
   }
 
   countBy(where): Promise<number> {

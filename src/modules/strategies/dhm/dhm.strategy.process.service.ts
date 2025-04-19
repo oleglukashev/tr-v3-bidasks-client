@@ -281,6 +281,9 @@ export class DhmStrategyProcessService {
       return order;
     } catch (e) {
       console.log(e);
+      console.log(session);
+      console.log('profitLevel', this.getFib(session, profitLevel));
+      console.log('stopLevel', this.getFib(session, stopLevel));
       console.log('error');
       return null;
     }

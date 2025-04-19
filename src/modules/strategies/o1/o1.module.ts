@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../../../prisma.service';
 import { O1StrategyDetectCronService } from './o1.strategy.detect.cron.service';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 import { KlinesEntityService } from '../../entity-services/klines-entity-service';
@@ -11,7 +10,6 @@ import { OrdersEntityService } from '../../entity-services/orders-entity-service
 @Module({
   imports: [],
   providers: [
-    PrismaService,
     KlinesEntityService,
     OrdersEntityService,
     StrategySessionsEntityService,

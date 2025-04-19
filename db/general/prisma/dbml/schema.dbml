@@ -18,7 +18,6 @@ Table pairs {
   startTs BigInt [not null, default: 0]
   currentTs BigInt [not null, default: 0]
   activated Boolean [not null, default: true]
-  klines klines [not null]
   orders orders [not null]
   strategySessions strategy_sessions [not null]
   historyStrategySessions history_strategy_sessions [not null]
@@ -44,25 +43,6 @@ Table orders {
   pair pairs [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-}
-
-Table klines {
-  id String [pk]
-  open String [not null]
-  close String [not null]
-  low String [not null]
-  high String [not null]
-  volume String [not null]
-  ts BigInt [not null]
-  interval Int [not null, default: 1]
-  pairId Int [not null]
-  pair pairs [not null]
-  createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
-
-  indexes {
-    (ts, pairId, interval) [unique]
-  }
 }
 
 Table balances {
@@ -137,8 +117,6 @@ Table strategy_session_trxs {
 Ref: pairs.tradingServiceId > trading_services.id [delete: Restrict]
 
 Ref: orders.pairId > pairs.id [delete: Restrict]
-
-Ref: klines.pairId > pairs.id [delete: Restrict]
 
 Ref: balance_trxs.balanceId > balances.id [delete: Restrict]
 

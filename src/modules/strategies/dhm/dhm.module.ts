@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../../../prisma.service';
 import { DhmStrategyDetectCronService } from './dhm.strategy.detect.cron.service';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 import { KlinesEntityService } from '../../entity-services/klines-entity-service';
@@ -15,7 +14,6 @@ import { DhmStrategyProcessService } from './dhm.strategy.process.service';
 @Module({
   imports: [],
   providers: [
-    PrismaService,
     KlinesEntityService,
     //HistoryStrategySessionsEntityService,
     StrategySessionsEntityService,

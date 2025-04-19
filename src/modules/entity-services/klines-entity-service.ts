@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma.service';
+import { KlinesPrismaService } from '../klinesPrisma/klinesPrisma.service';
 import { Base } from './base.service';
 
 @Injectable()
 export class KlinesEntityService extends Base {
-  constructor(prismaService: PrismaService) {
-    super(prismaService, 'kline');
+  constructor(klinesPrismaService: KlinesPrismaService) {
+    super(klinesPrismaService, 'kline');
   }
 
   public override async preBaseCreate(data) {

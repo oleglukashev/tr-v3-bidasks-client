@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as yargs from 'yargs';
 import { Cron } from '@nestjs/schedule';
-import { PrismaService } from '../../../prisma.service';
+import { GeneralPrismaService } from '../../generalPrisma/generalPrisma.service';
 import { O1StrategyDetectService } from './o1.strategy.detect.service';
 import { startOfHourTs } from '../../../utils/time';
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
@@ -11,7 +11,7 @@ export class O1StrategyDetectCronService {
   constructor(
     private readonly dhmStrategyDetectService: O1StrategyDetectService,
     private readonly strategySessoinsEntityService: StrategySessionsEntityService,
-    private readonly prismaService: PrismaService,
+    private readonly prismaService: GeneralPrismaService,
   ) {}
 
   @Cron('*/5 * * * * *')

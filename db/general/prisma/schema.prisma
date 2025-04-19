@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated"
 }
 
 generator dbml {
@@ -11,7 +12,7 @@ generator dbml {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("GENERAL_DATABASE_URL")
 }
 
 model TradingService {
@@ -36,7 +37,6 @@ model Pair {
   currentTs BigInt  @default(0) @map("current_ts")
   activated Boolean @default(true)
 
-  klines                  Kline[]
   orders                  Order[]
   strategySessions        StrategySession[]
   historyStrategySessions HistoryStrategySession[]
@@ -67,26 +67,6 @@ model Order {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("orders")
-}
-
-model Kline {
-  id       String @id @unique @default(uuid())
-  open     String @db.VarChar(50)
-  close    String @db.VarChar(50)
-  low      String @db.VarChar(50)
-  high     String @db.VarChar(50)
-  volume   String @db.VarChar(50)
-  ts       BigInt
-  interval Int    @default(1)
-
-  pairId Int  @map("pair_id")
-  pair   Pair @relation(fields: [pairId], references: [id], onDelete: Restrict)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@unique([ts, pairId, interval])
-  @@map("klines")
 }
 
 model Balance {
