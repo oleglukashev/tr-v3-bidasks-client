@@ -14,6 +14,10 @@ export function startOfHourTs() {
   return moment().utc().startOf('hour').valueOf();
 }
 
+export function startOfHourAgoTs() {
+  return moment().utc().subtract(1, 'hour').startOf('hour').valueOf();
+}
+
 export function startOfMonthTs() {
   return moment().utc().startOf('month').valueOf();
 }

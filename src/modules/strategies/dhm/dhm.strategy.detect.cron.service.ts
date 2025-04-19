@@ -3,7 +3,7 @@ import * as yargs from 'yargs';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../../prisma.service';
 import { DhmStrategyDetectService } from './dhm.strategy.detect.service';
-import { startOfHourTs } from '../../../utils/time';
+import { startOfHourAgoTs, startOfHourTs } from "../../../utils/time";
 import { StrategySessionsEntityService } from '../../entity-services/strategy-sessions-entity-service';
 import { direction } from '../../../utils/kline';
 
@@ -19,18 +19,12 @@ export class DhmStrategyDetectCronService {
   async handleCron() {
     const followDirection = 'down';
     const argv: any = yargs.argv;
-    const startCurrentHourTs = startOfHourTs();
+    const startCurrentHourTs = startOfHourAgoTs();
 
     const pairsLastKlines: any = await this.prismaService.$queryRaw`
-      SELECT k.id, k.low, k.high
+      SELECT k.id, k.low, k.high, k.ts
       FROM klines k
       INNER JOIN pairs p ON p.id = k.pair_id
-      INNER JOIN (
-          SELECT pair_id, MAX(ts) AS latest_timestamp
-          FROM klines
-          GROUP BY pair_id
-      ) subquery
-      ON k.pair_id = subquery.pair_id AND k.ts = subquery.latest_timestamp
       WHERE k.interval = 60 AND k.ts < ${startCurrentHourTs} AND k.pair_id = ${argv.pairId}::integer;
     `;
     // INTERVAL 60m!!!!
