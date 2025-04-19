@@ -253,6 +253,7 @@ export class DhmStrategyProcessService {
           defaultType: 'future', // Указываем, что будем работать с фьючерсами
         },
       });
+      exchange.setSandboxMode(true);
 
       await exchange.setMarginMode('isolated', symbol, {
         leverage: this.LEVEREDGE,
@@ -367,6 +368,7 @@ export class DhmStrategyProcessService {
           defaultType: 'future', // Указываем, что будем работать с фьючерсами
         },
       });
+      exchange.setSandboxMode(true);
       const res = await exchange.cancelOrder(options.id, symbol);
       return res;
     } catch (e) {
