@@ -46,14 +46,28 @@ export class DhmStrategyDetectService {
       levels: { 0: kline1.high, 1: kline1.low },
     });
     const directionValue = direction(kline1);
-    // direction - up
-    if (kline2.high > kline1.high) {
-      if (kline1Fib['0.5'] > kline2.low) {
+    if (directionValue === 'up') {
+      // direction - up
+      if (kline2.high <= kline1.high) {
         return;
       }
-      // direction - down
+      const fib = getFibRetracement({
+        levels: { 0: kline1.high, 1: kline1.low },
+      });
+
+      if (fib['0.5'] > kline2.low) {
+        return;
+      }
     } else {
-      if (kline1Fib['0.5'] < kline2.low) {
+      // direction - down
+      if (kline2.low >= kline1.low) {
+        return;
+      }
+      const fib = getFibRetracement({
+        levels: { 0: kline1.low, 1: kline1.high },
+      });
+
+      if (fib['0.5'] < kline2.high) {
         return;
       }
     }
@@ -106,8 +120,8 @@ export class DhmStrategyDetectService {
           kline2Id: kline2.id,
           kline1: kline1,
           kline2: kline2,
-          low: directionValue === 'up' ? kline1.low : kline1.high,
-          high: directionValue === 'up' ? kline2.high : kline2.low,
+          low: directionValue === 'up' ? kline1.low : kline2.low,
+          high: directionValue === 'up' ? kline2.high : kline1.high,
         },
       });
     }
