@@ -8,7 +8,6 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "postbuild": "cp -r db dist",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -31,7 +30,6 @@
     "prisma:generate:watch": "npx src/db/general/prisma generate --watch",
     "start:db": "yarn migrate:up && yarn prisma:generate && yarn seed",
     "seed": "src/db/general/prisma db seed",
-    "postinstall": "yarn prisma:generate",
     "command-nest": "TS_NODE_PROJECT=./tsconfig.build.json ts-node ./src/cli.ts"
   },
   "dependencies": {
