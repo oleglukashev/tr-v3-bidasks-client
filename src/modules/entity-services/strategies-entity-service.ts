@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { GeneralPrismaService } from '../generalPrisma/generalPrisma.service';
-import { Base } from './base.service';
+import { BaseEntityService } from './base.service';
 
 @Injectable()
-export class StrategiesEntityService extends Base {
+export class StrategiesEntityService extends BaseEntityService {
   constructor(prismaService: GeneralPrismaService) {
     super(prismaService, 'strategy');
   }

@@ -5,7 +5,7 @@ import {
   Logger,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { PrismaClient } from 'src/../db/klines/prisma/generated';
+import { PrismaClient } from '.db/klines/generated';
 
 @Injectable()
 export class KlinesPrismaService

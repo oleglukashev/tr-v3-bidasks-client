@@ -18,10 +18,10 @@ interface IFind {
   include?: XOR<PostInclude, null>;
 }
 
-export class Base {
+export class BaseEntityService {
   constructor(
     prismaService: GeneralPrismaService | KlinesPrismaService,
-    private readonly prismaDomain: string,
+    protected readonly prismaDomain: string,
   ) {
     this.prismaService = prismaService;
   }
@@ -37,6 +37,7 @@ export class Base {
     select,
     include,
     page,
+    take,
   }: IFind) {
     page = this.getPage(page);
     const params = Object.assign(
@@ -48,8 +49,8 @@ export class Base {
         include,
       },
       {
-        skip: page ? page * Base.DEFAULT_PAGE_SIZE : 0,
-        take: Base.DEFAULT_PAGE_SIZE,
+        skip: page ? page * BaseEntityService.DEFAULT_PAGE_SIZE : 0,
+        take: take || BaseEntityService.DEFAULT_PAGE_SIZE,
       },
     );
     return (await this._prismaDomain().findMany(params)) || [];
@@ -99,8 +100,8 @@ export class Base {
     return entity;
   }
 
-  async baseUpdateMany(where: any, data: any) {
-    return this._prismaDomain().updateMany({ where, data });
+  async baseUpdateMany(params: any) {
+    return this._prismaDomain().updateMany(params);
   }
 
   async baseUpdate(id: number | string, data: any) {
@@ -172,8 +173,14 @@ export class Base {
     }
   }
 
+  async baseRemoveAll(): Promise<void> {
+    return this._prismaDomain().deleteMany({});
+  }
+
   async pages(where): Promise<number> {
-    return Math.ceil((await this.countBy(where)) / Base.DEFAULT_PAGE_SIZE);
+    return Math.ceil(
+      (await this.countBy(where)) / BaseEntityService.DEFAULT_PAGE_SIZE,
+    );
   }
 
   countBy(where): Promise<number> {
@@ -188,11 +195,14 @@ export class Base {
     return this._prismaDomain().upsert(params);
   }
 
-  async createMany(data): Promise<any> {
-    return this._prismaDomain().createMany({ data });
-  }
-
-  async entitiesCollection({ where, include, orderBy, page, select }: any) {
+  async entitiesCollection({
+    where,
+    include,
+    orderBy,
+    page,
+    take,
+    select,
+  }: any) {
     const result: any = {
       items: page
         ? await this.findManyWithPagination({
@@ -201,11 +211,18 @@ export class Base {
             orderBy,
             page,
             select,
+            take,
           })
-        : await this.findMany({ where, include, orderBy, select }),
+        : await this.findMany({
+            where,
+            include,
+            orderBy,
+            select,
+            take: take || BaseEntityService.DEFAULT_PAGE_SIZE,
+          }),
     };
 
-    if (page) {
+    if (typeof page !== 'undefined') {
       result.totalPages = await this.pages(where);
       result.totalItems = await this.countBy(where);
       result.page = page;
@@ -240,6 +257,7 @@ export class Base {
     return this.findMany({
       select,
       where,
+      take: 100,
       orderBy: { id: 'asc' },
     });
   }
