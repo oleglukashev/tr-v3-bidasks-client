@@ -4,10 +4,10 @@ import {
   ArgumentsHost,
   HttpStatus,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '.db/klines/generated';
 
 @Catch(Prisma.PrismaClientValidationError)
-export class PrismaClientValidationFilter implements ExceptionFilter {
+export class KlinesPrismaClientValidationFilter implements ExceptionFilter {
   catch(exception: Prisma.PrismaClientValidationError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
