@@ -14,8 +14,7 @@ export class GeneralPrismaClientExceptionFilter extends BaseExceptionFilter {
       case 'P2002': {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const key =
-          exception.meta?.target?.join(', ') || exception.meta?.field_name;
+        const key = exception.meta?.target?.join(', ') || exception.meta?.field_name;
         const status = HttpStatus.BAD_REQUEST;
         response.status(status).json({
           statusCode: status,
@@ -26,8 +25,7 @@ export class GeneralPrismaClientExceptionFilter extends BaseExceptionFilter {
       case 'P2003': {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const key =
-          exception.meta?.target?.join(', ') || exception.meta?.field_name;
+        const key = exception.meta?.target?.join(', ') || exception.meta?.field_name;
         const status = HttpStatus.BAD_REQUEST;
         response.status(status).json({
           statusCode: status,
