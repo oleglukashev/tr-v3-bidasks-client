@@ -25,7 +25,7 @@ export class ApiKlinesController {
     @Query('page', new DefaultValuePipe(false), ParseIntPipe) page,
     @Query('limit', new DefaultValuePipe(false), ParseIntPipe) limit,
   ): Promise<any> {
-    return this.klinesEntityService.findMany({
+    let items = await this.klinesEntityService.findMany({
       where: {
         pairId,
         interval: t,
@@ -34,5 +34,7 @@ export class ApiKlinesController {
       page,
       take: limit,
     });
+    items = items.reverse();
+    return items;
   }
 }
