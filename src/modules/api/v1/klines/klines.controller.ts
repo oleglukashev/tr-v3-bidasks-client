@@ -21,12 +21,14 @@ export class ApiKlinesController {
   @HttpCode(HttpStatus.OK)
   public async byIds(
     @Query('pairId', new DefaultValuePipe(false), ParseIntPipe) pairId,
+    @Query('t', new DefaultValuePipe(false), ParseIntPipe) t,
     @Query('page', new DefaultValuePipe(false), ParseIntPipe) page,
     @Query('limit', new DefaultValuePipe(false), ParseIntPipe) limit,
   ): Promise<any> {
     return this.klinesEntityService.findMany({
       where: {
         pairId,
+        interval: t,
       },
       orderBy: { ts: 'desc' },
       page,
