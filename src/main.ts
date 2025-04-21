@@ -14,6 +14,7 @@ import { KlinesPrismaClientValidationFilter } from './filters/klines-prisma-clie
 
 async function bootstrap() {
   const app: NestExpressApplication = await NestFactory.create(AppModule);
+  app.enableCors();
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(
