@@ -4,6 +4,7 @@ import { KlinesPrismaModule } from './modules/klinesPrisma/klinesPrisma.module';
 import { ApiKlinesModule } from './modules/api/v1/klines/klines.module';
 import { EntityModule } from './modules/entity-services/entities.module';
 import { ConfigModule } from '@nestjs/config';
+import { ApiDhmModule } from './modules/api/v1/dhm/dhm.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ConfigModule } from '@nestjs/config';
     GeneralPrismaModule,
     KlinesPrismaModule,
     ApiKlinesModule,
+    ApiDhmModule,
   ],
   providers: [],
 })
