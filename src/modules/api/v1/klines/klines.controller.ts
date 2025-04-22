@@ -17,18 +17,18 @@ export class ApiKlinesController {
   constructor(private readonly klinesEntityService: KlinesEntityService) {}
 
   @Get('')
-  @ApiOkResponse({ description: 'List of products by id' })
+  @ApiOkResponse({ description: 'List of klines' })
   @HttpCode(HttpStatus.OK)
   public async byIds(
     @Query('pairId', new DefaultValuePipe(false), ParseIntPipe) pairId,
-    @Query('t', new DefaultValuePipe(false), ParseIntPipe) t,
+    @Query('tf', new DefaultValuePipe(false), ParseIntPipe) tf,
     @Query('page', new DefaultValuePipe(false), ParseIntPipe) page,
     @Query('limit', new DefaultValuePipe(false), ParseIntPipe) limit,
   ): Promise<any> {
     let items = await this.klinesEntityService.findMany({
       where: {
         pairId,
-        interval: t,
+        interval: tf,
       },
       orderBy: { ts: 'desc' },
       page,

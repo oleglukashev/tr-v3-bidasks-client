@@ -23,7 +23,7 @@ export class ApiDhmController {
   @HttpCode(HttpStatus.OK)
   public async byIds(
     @Query('pairId', new DefaultValuePipe(false), ParseIntPipe) pairId,
-    @Query('tf', new DefaultValuePipe(false), ParseIntPipe) t,
+    @Query('tf', new DefaultValuePipe(false), ParseIntPipe) tf,
     @Query('page', new DefaultValuePipe(false), ParseIntPipe) page,
     @Query('limit', new DefaultValuePipe(false), ParseIntPipe) limit,
   ): Promise<any> {
