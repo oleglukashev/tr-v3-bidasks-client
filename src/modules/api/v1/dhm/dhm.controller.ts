@@ -6,9 +6,10 @@ import {
   DefaultValuePipe,
   Get,
   HttpCode,
-  ParseIntPipe,
+  ParseIntPipe, Delete,
 } from '@nestjs/common';
 import { StrategySessionsEntityService } from '../../../entity-services/strategy-sessions-entity-service';
+import fetch from 'ccxt/js/src/static_dependencies/node-fetch';
 
 @ApiTags('Products')
 @ApiBearerAuth()
@@ -38,5 +39,19 @@ export class ApiDhmController {
     });
     items = items.reverse();
     return items;
+  }
+
+  @Delete('')
+  @ApiOkResponse({ description: 'Delete all dhm strategies' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async delete(): Promise<any> {
+    await this.strategySessionsEntityService.baseRemoveAll();
+  }
+
+  @Post('run')
+  @ApiOkResponse({ description: 'Run dhm strategies' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async run(): Promise<any> {
+    await this.strategySessionsEntityService.run(49, 60);
   }
 }
