@@ -47,11 +47,4 @@ export class ApiDhmController {
   public async delete(): Promise<any> {
     await this.strategySessionsEntityService.baseRemoveAll();
   }
-
-  @Post('run')
-  @ApiOkResponse({ description: 'Run dhm strategies' })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  public async run(): Promise<any> {
-    await this.strategySessionsEntityService.run(49, 60);
-  }
 }
