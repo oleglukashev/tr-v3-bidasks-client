@@ -6,7 +6,7 @@ import {
   DefaultValuePipe,
   Get,
   HttpCode,
-  ParseIntPipe, Delete, Post, UsePipes, ValidationPipe, Body, Patch,
+  ParseIntPipe, Delete, Post, UsePipes, ValidationPipe, Body, Patch, Param,
 } from '@nestjs/common';
 import { StrategySessionsEntityService } from '../../../entity-services/strategy-sessions-entity-service';
 import { CreateDto } from './dto/create.dto';
@@ -62,14 +62,26 @@ export class ApiDhmController {
   })
   @UsePipes(new ValidationPipe({ transform: true }))
   @HttpCode(HttpStatus.OK)
-  public async update(@Body() updateDto: UpdateDto): Promise<any> {
-    return this.apiDhmService.update(updateDto);
+  public async update(
+    @Param('id', new DefaultValuePipe(0), ParseIntPipe) id: number,
+    @Body() updateDto: UpdateDto,
+  ): Promise<any> {
+    return this.apiDhmService.update(id, updateDto);
+  }
+
+  @Delete(':id')
+  @ApiOkResponse({ description: 'Delete dhm strategy' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async delete(
+    @Param('id', new DefaultValuePipe(0), ParseIntPipe) id: number,
+  ): Promise<any> {
+    await this.strategySessionsEntityService.baseRemove(id);
   }
 
   @Delete('')
   @ApiOkResponse({ description: 'Delete all dhm strategies' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  public async delete(): Promise<any> {
+  public async deleteAll(): Promise<any> {
     await this.strategySessionsEntityService.baseRemoveAll();
   }
 }
