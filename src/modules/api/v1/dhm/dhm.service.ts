@@ -11,6 +11,8 @@ export class ApiDhmService {
     private readonly klinesEntityService: KlinesEntityService,
   ) {}
 
+  KLINE_SIZE = 3600000;
+
   async create(createDto: CreateDto) {
     const existSession = await this.dhmEntityService.findFirst({
       where: {
@@ -37,7 +39,7 @@ export class ApiDhmService {
 
     const kline2 = await this.klinesEntityService.findFirst({
       where: {
-        ts: createDto.kline2Ts,
+        ts: createDto.kline1Ts + this.KLINE_SIZE,
         interval: 60,
         pairId: createDto.pairId,
       },
@@ -91,7 +93,7 @@ export class ApiDhmService {
 
     const kline2 = await this.klinesEntityService.findFirst({
       where: {
-        ts: updateDto.kline2Ts,
+        ts: updateDto.kline1Ts + this.KLINE_SIZE,
         interval: 60,
         pairId: existSession.pairId,
       },
@@ -135,27 +137,27 @@ export class ApiDhmService {
       }
     }
 
-    if (updateDto.kline2Ts !== parseInt(kline2.id)) {
-      const newKline2 = await this.klinesEntityService.findFirst({
-        where: {
-          ts: updateDto.kline2Ts,
-        },
-      });
-      if (!newKline2) {
-        throw new UnprocessableEntityException('Kline2 is not exist');
-      }
-      data.data.kline2Id = newKline2.id;
-      data.data.kline2 = newKline2;
-      if (existSession.direction === 'up') {
-        if (parseFloat(newKline2.high) > parseFloat(existSession.data.high)) {
-          data.data.high = newKline2.high;
-        }
-      } else {
-        if (parseFloat(newKline2.low) < parseFloat(existSession.data.low)) {
-          data.data.low = newKline2.low;
-        }
-      }
-    }
+    // if (updateDto.kline2Ts !== parseInt(kline2.id)) {
+    //   const newKline2 = await this.klinesEntityService.findFirst({
+    //     where: {
+    //       ts: updateDto.kline2Ts,
+    //     },
+    //   });
+    //   if (!newKline2) {
+    //     throw new UnprocessableEntityException('Kline2 is not exist');
+    //   }
+    //   data.data.kline2Id = newKline2.id;
+    //   data.data.kline2 = newKline2;
+    //   if (existSession.direction === 'up') {
+    //     if (parseFloat(newKline2.high) > parseFloat(existSession.data.high)) {
+    //       data.data.high = newKline2.high;
+    //     }
+    //   } else {
+    //     if (parseFloat(newKline2.low) < parseFloat(existSession.data.low)) {
+    //       data.data.low = newKline2.low;
+    //     }
+    //   }
+    // }
 
     return this.dhmEntityService.baseUpdate(id, data);
   }

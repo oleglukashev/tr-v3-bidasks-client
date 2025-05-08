@@ -5,10 +5,6 @@ export class CreateDto {
   @IsNotEmpty()
   kline1Ts: number;
 
-  @IsNumber()
-  @IsNotEmpty()
-  kline2Ts: number;
-
   @IsString()
   @IsNotEmpty()
   status: 'created' | 'waiting' | 'triggered';
