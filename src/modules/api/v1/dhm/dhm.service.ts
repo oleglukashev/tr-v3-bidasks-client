@@ -16,8 +16,8 @@ export class ApiDhmService {
   async create(createDto: CreateDto) {
     const existSession = await this.dhmEntityService.findFirst({
       where: {
-        pairId: createDto.pairId,
-        startTs: createDto.kline1Ts,
+        pairId: { equals: createDto.pairId },
+        startTs: { equals: createDto.kline1Ts },
       },
     });
 
@@ -27,9 +27,9 @@ export class ApiDhmService {
 
     const kline1 = await this.klinesEntityService.findFirst({
       where: {
-        ts: createDto.kline1Ts,
-        interval: 60,
-        pairId: createDto.pairId,
+        ts: { equals: createDto.kline1Ts },
+        interval: { equals: 60 },
+        pairId: { equals: createDto.pairId },
       },
     });
 
@@ -39,9 +39,9 @@ export class ApiDhmService {
 
     const kline2 = await this.klinesEntityService.findFirst({
       where: {
-        ts: createDto.kline1Ts + this.KLINE_SIZE,
-        interval: 60,
-        pairId: createDto.pairId,
+        ts: { equals: createDto.kline1Ts + this.KLINE_SIZE },
+        interval: { equals: 60 },
+        pairId: { equals: createDto.pairId },
       },
     });
 
@@ -91,9 +91,9 @@ export class ApiDhmService {
 
     const kline1 = await this.klinesEntityService.findFirst({
       where: {
-        ts: updateDto.kline1Ts,
-        interval: 60,
-        pairId: existSession.pairId,
+        ts: { equals: updateDto.kline1Ts },
+        interval: { equals: 60 },
+        pairId: { equals: existSession.pairId },
       },
     });
 
@@ -103,9 +103,9 @@ export class ApiDhmService {
 
     const kline2 = await this.klinesEntityService.findFirst({
       where: {
-        ts: updateDto.kline1Ts + this.KLINE_SIZE,
-        interval: 60,
-        pairId: existSession.pairId,
+        ts: { equals: updateDto.kline1Ts + this.KLINE_SIZE },
+        interval: { equals: 60 },
+        pairId: { equals: existSession.pairId },
       },
     });
 
