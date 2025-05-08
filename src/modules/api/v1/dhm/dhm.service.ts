@@ -8,7 +8,7 @@ import { KlinesEntityService } from '../../../entity-services/klines-entity-serv
 export class ApiDhmService {
   constructor(
     private readonly dhmEntityService: StrategySessionsEntityService,
-    private readonly klinesEntityService: KlinesEntityService
+    private readonly klinesEntityService: KlinesEntityService,
   ) {}
 
   async create(createDto: CreateDto) {
@@ -68,9 +68,9 @@ export class ApiDhmService {
   }
 
   async update(updateDto: UpdateDto) {
-    return this.dhmEntityService.baseCreate({
-      ...createDto,
-      prices,
-    });
+    // return this.dhmEntityService.baseCreate({
+    //   ...createDto,
+    //   prices,
+    // });
   }
 }
