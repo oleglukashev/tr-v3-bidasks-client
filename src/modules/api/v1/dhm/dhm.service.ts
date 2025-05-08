@@ -52,7 +52,7 @@ export class ApiDhmService {
     const strategyDirection =
       kline1.high > kline2.low && kline1.high < kline2.high ? 'up' : 'down';
 
-    return this.dhmEntityService.baseCreate({
+    const data: any = {
       pairId: createDto.pairId,
       startTs: kline1.ts,
       type: 'dhm',
@@ -67,7 +67,17 @@ export class ApiDhmService {
         low: strategyDirection === 'up' ? kline1.low : kline2.low,
         high: strategyDirection === 'up' ? kline2.high : kline1.high,
       },
-    });
+    };
+
+    if (createDto.low) {
+      data.data.low = createDto.low;
+    }
+
+    if (createDto.high) {
+      data.data.high = createDto.high;
+    }
+
+    return this.dhmEntityService.baseCreate(data);
   }
 
   async update(id: number, updateDto: UpdateDto) {
@@ -135,6 +145,14 @@ export class ApiDhmService {
           data.data.high = newKline1.high;
         }
       }
+    }
+
+    if (updateDto.low) {
+      data.data.low = updateDto.low;
+    }
+
+    if (updateDto.high) {
+      data.data.high = updateDto.high;
     }
 
     // if (updateDto.kline2Ts !== parseInt(kline2.id)) {

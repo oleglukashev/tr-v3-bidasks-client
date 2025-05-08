@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateDto {
   @IsNumber()
@@ -20,4 +20,12 @@ export class CreateDto {
   @IsNumber()
   @IsNotEmpty()
   pairId: number;
+
+  @IsNumber()
+  @IsOptional()
+  low: number;
+
+  @IsNumber()
+  @IsOptional()
+  high: number;
 }

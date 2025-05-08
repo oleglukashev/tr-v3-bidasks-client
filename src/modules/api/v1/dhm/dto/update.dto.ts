@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UpdateDto {
   @IsNumber()
@@ -12,4 +12,12 @@ export class UpdateDto {
   @IsBoolean()
   @IsNotEmpty()
   confirmed: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  low: number;
+
+  @IsNumber()
+  @IsOptional()
+  high: number;
 }
