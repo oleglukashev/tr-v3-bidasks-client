@@ -128,7 +128,9 @@ export class ApiDhmService {
     if (updateDto.kline1Ts !== parseInt(kline1.id)) {
       const newKline1 = await this.klinesEntityService.findFirst({
         where: {
-          ts: updateDto.kline1Ts,
+          interval: { equals: 60 },
+          ts: { equals: updateDto.kline1Ts },
+          pairId: { equals: existSession.pairId },
         },
       });
       if (!newKline1) {
