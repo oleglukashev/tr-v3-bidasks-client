@@ -6,10 +6,12 @@ import {
   DefaultValuePipe,
   Get,
   HttpCode,
-  ParseIntPipe, Delete,
+  ParseIntPipe, Delete, Post, UsePipes, ValidationPipe, Body, Patch,
 } from '@nestjs/common';
 import { StrategySessionsEntityService } from '../../../entity-services/strategy-sessions-entity-service';
-import fetch from 'ccxt/js/src/static_dependencies/node-fetch';
+import { CreateDto } from './dto/create.dto';
+import { ApiDhmService } from './dhm.service';
+import { UpdateDto } from './dto/update.dto';
 
 @ApiTags('Products')
 @ApiBearerAuth()
@@ -17,6 +19,7 @@ import fetch from 'ccxt/js/src/static_dependencies/node-fetch';
 export class ApiDhmController {
   constructor(
     private readonly strategySessionsEntityService: StrategySessionsEntityService,
+    private readonly apiDhmService: ApiDhmService,
   ) {}
 
   @Get('')
@@ -39,6 +42,28 @@ export class ApiDhmController {
     });
     items = items.reverse();
     return items;
+  }
+
+  @Post('')
+  @ApiOkResponse({
+    description: 'Create dhm',
+    type: [CreateDto],
+  })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @HttpCode(HttpStatus.OK)
+  public async create(@Body() createDto: CreateDto): Promise<any> {
+    return this.apiDhmService.create(createDto);
+  }
+
+  @Patch(':id')
+  @ApiOkResponse({
+    description: 'Update dhm',
+    type: [UpdateDto],
+  })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @HttpCode(HttpStatus.OK)
+  public async update(@Body() updateDto: UpdateDto): Promise<any> {
+    return this.apiDhmService.update(updateDto);
   }
 
   @Delete('')
