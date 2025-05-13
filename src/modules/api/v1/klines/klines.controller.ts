@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { KlinesEntityService } from '../../../entity-services/klines-entity-service';
 
@@ -46,12 +47,18 @@ export class ApiKlinesController {
     @Query('tf', new DefaultValuePipe(false), ParseIntPipe) tf,
     @Query('ts', new DefaultValuePipe(false), ParseIntPipe) ts,
   ): Promise<any> {
-    return this.klinesEntityService.findFirst({
+    const kline = await this.klinesEntityService.findFirst({
       where: {
         pairId,
         interval: tf,
         ts,
       },
     });
+
+    if (!kline) {
+      throw new NotFoundException('Kline not found');
+    }
+
+    return kline;
   }
 }
