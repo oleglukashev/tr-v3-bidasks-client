@@ -4,7 +4,7 @@ import {
   ArgumentsHost,
   HttpStatus,
 } from '@nestjs/common';
-import { Prisma } from '.db/klines/generated';
+import { Prisma } from '@prisma/client';
 
 @Catch(Prisma.PrismaClientValidationError)
 export class PrismaClientValidationFilter implements ExceptionFilter {
