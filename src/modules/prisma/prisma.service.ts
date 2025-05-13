@@ -5,14 +5,14 @@ import {
   Logger,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { PrismaClient } from '.db/klines/generated';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class KlinesPrismaService
+export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger(KlinesPrismaService.name);
+  private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
     super({ log: [{ emit: 'event', level: 'query' }] });

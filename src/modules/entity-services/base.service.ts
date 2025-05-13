@@ -6,8 +6,7 @@ import {
   Enumerable,
   PostInclude,
 } from 'prisma';
-import { GeneralPrismaService } from '../generalPrisma/generalPrisma.service';
-import { KlinesPrismaService } from '../klinesPrisma/klinesPrisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 interface IFind {
   where?: UserWhereInput;
@@ -20,7 +19,7 @@ interface IFind {
 
 export class BaseEntityService {
   constructor(
-    prismaService: GeneralPrismaService | KlinesPrismaService,
+    prismaService: PrismaService,
     protected readonly prismaDomain: string,
   ) {
     this.prismaService = prismaService;

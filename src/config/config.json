@@ -1,0 +1,108 @@
+{
+  "2": {
+    "name": "bybit",
+    "types": {
+      "spot" : {
+        "name": "spot",
+        "tickers": {
+          "49": {
+            "symbol": "KAS/USDT",
+            "tickerAnswerSymbol": "KAS/USDT"
+          },
+          "50": {
+            "symbol": "BTC/USDT",
+            "tickerAnswerSymbol": "BTC/USDT"
+          },
+          "51": {
+            "symbol": "ETH/USDT",
+            "tickerAnswerSymbol": "ETH/USDT"
+          },
+          "52": {
+            "symbol": "LINK/USDT",
+            "tickerAnswerSymbol": "LINK/USDT"
+          },
+          "53": {
+            "symbol": "PYTH/USDT",
+            "tickerAnswerSymbol": "PYTH/USDT"
+          },
+          "54": {
+            "symbol": "SOL/USDT",
+            "tickerAnswerSymbol": "SOL/USDT"
+          },
+          "55": {
+            "symbol": "AVAX/USDT",
+            "tickerAnswerSymbol": "AVAX/USDT"
+          },
+          "56": {
+            "symbol": "ADA/USDT",
+            "tickerAnswerSymbol": "ADA/USDT"
+          },
+          "57": {
+            "symbol": "TON/USDT",
+            "tickerAnswerSymbol": "TON/USDT"
+          },
+          "58": {
+            "symbol": "XLM/USDT",
+            "tickerAnswerSymbol": "XLM/USDT"
+          },
+          "59": {
+            "symbol": "DOT/USDT",
+            "tickerAnswerSymbol": "DOT/USDT"
+          }
+        }
+      },
+      "future": {
+        "name": "linear",
+        "tickers": {
+          "49": {
+            "symbol": "KASUSDT",
+            "tickerAnswerSymbol": "KAS/USDT:USDT"
+          },
+          "50": {
+            "symbol": "BTCUSDT",
+            "tickerAnswerSymbol": "BTC/USDT:USDT"
+          },
+          "51": {
+            "symbol": "ETHUSDT",
+            "tickerAnswerSymbol": "ETH/USDT:USDT"
+          },
+          "52": {
+            "symbol": "LINKUSDT",
+            "tickerAnswerSymbol": "LINK/USDT:USDT"
+          },
+          "53": {
+            "symbol": "PYTHUSDT",
+            "tickerAnswerSymbol": "PYTH/USDT:USDT"
+          },
+          "54": {
+            "symbol": "SOLUSDT",
+            "tickerAnswerSymbol": "SOL/USDT:USDT"
+          },
+          "55": {
+            "symbol": "AVAXUSDT",
+            "tickerAnswerSymbol": "AVAX/USDT:USDT"
+          },
+          "56": {
+            "symbol": "ADAUSDT",
+            "tickerAnswerSymbol": "ADA/USDT:USDT"
+          },
+          "57": {
+            "symbol": "TONUSDT",
+            "tickerAnswerSymbol": "TON/USDT:USDT"
+          },
+          "58": {
+            "symbol": "XLMUSDT",
+            "tickerAnswerSymbol": "XLM/USDT:USDT"
+          },
+          "59": {
+            "symbol": "DOTUSDT",
+            "tickerAnswerSymbol": "DOT/USDT:USDT"
+          }
+        }
+      }
+    },
+    "timeframes": [
+      "1m", "5m", "15m", "30m", "1h", "4h", "1d"
+    ]
+  }
+}

@@ -6,30 +6,32 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../../../node_modules/.db/bidasks/generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("BIDASKS_DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 generator dbml {
   provider = "prisma-dbml-generator"
 }
 
-model Trade {
-  id     String @id @unique @default(uuid())
-  ts     BigInt
-  side   String @db.VarChar(10)
-  price  String @db.VarChar(50)
-  amount String @db.VarChar(50)
-  cost   String @db.VarChar(50)
+model Kline {
+  id       String @id @unique @default(uuid())
+  open     String @db.VarChar(50)
+  close    String @db.VarChar(50)
+  low      String @db.VarChar(50)
+  high     String @db.VarChar(50)
+  volume   String @db.VarChar(50)
+  ts       BigInt
+  interval Int    @default(1)
 
   pairId Int @map("pair_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("trades")
+  @@unique([ts, pairId, interval])
+  @@map("klines")
 }

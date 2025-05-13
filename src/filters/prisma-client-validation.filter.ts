@@ -7,7 +7,7 @@ import {
 import { Prisma } from '.db/klines/generated';
 
 @Catch(Prisma.PrismaClientValidationError)
-export class KlinesPrismaClientValidationFilter implements ExceptionFilter {
+export class PrismaClientValidationFilter implements ExceptionFilter {
   catch(exception: Prisma.PrismaClientValidationError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();

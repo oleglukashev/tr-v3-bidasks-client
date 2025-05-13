@@ -1,22 +1,17 @@
 import { Module } from '@nestjs/common';
-import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.module';
-import { KlinesPrismaModule } from './modules/klinesPrisma/klinesPrisma.module';
+import { PrismaModule } from './modules/prisma/prisma.module';
 import { ApiKlinesModule } from './modules/api/v1/klines/klines.module';
 import { EntityModule } from './modules/entity-services/entities.module';
 import { ConfigModule } from '@nestjs/config';
-import { ApiDhmModule } from './modules/api/v1/dhm/dhm.module';
-import { ApiPairsModule } from './modules/api/v1/pairs/pairs.module';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     EntityModule,
-    GeneralPrismaModule,
-    KlinesPrismaModule,
+    PrismaModule,
     ApiKlinesModule,
-    ApiDhmModule,
-    ApiPairsModule,
   ],
-  providers: [],
+  providers: [AppService],
 })
 export class AppModule {}

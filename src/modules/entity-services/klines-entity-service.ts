@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { KlinesPrismaService } from '../klinesPrisma/klinesPrisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { BaseEntityService } from './base.service';
 
 @Injectable()
 export class KlinesEntityService extends BaseEntityService {
-  constructor(klinesPrismaService: KlinesPrismaService) {
+  constructor(klinesPrismaService: PrismaService) {
     super(klinesPrismaService, 'kline');
   }
 
