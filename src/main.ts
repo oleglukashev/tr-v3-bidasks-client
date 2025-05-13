@@ -21,7 +21,7 @@ async function bootstrap() {
     new PrismaClientValidationFilter(),
   );
   const appService = app.get<AppService>(AppService);
-  await appService.init();
+  appService.init();
   await app.listen(process.env.PORT);
 }
 void bootstrap();
