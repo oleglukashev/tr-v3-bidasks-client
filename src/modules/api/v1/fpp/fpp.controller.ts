@@ -25,7 +25,7 @@ export class ApiFppController {
     @Query('page', new DefaultValuePipe(false), ParseIntPipe) page,
     @Query('limit', new DefaultValuePipe(false), ParseIntPipe) limit,
   ): Promise<any> {
-    let items = await this.fppEntityService.findMany({
+    return this.fppEntityService.findMany({
       where: {
         pairId,
         tf,
@@ -34,7 +34,5 @@ export class ApiFppController {
       page,
       take: limit,
     });
-    items = items.reverse();
-    return items;
   }
 }

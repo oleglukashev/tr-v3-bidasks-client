@@ -25,7 +25,7 @@ export class ApiClustersController {
     @Query('page', new DefaultValuePipe(false), ParseIntPipe) page,
     @Query('limit', new DefaultValuePipe(false), ParseIntPipe) limit,
   ): Promise<any> {
-    let items = await this.clustersEntityService.findMany({
+    return this.clustersEntityService.findMany({
       where: {
         pairId,
         tf,
@@ -34,8 +34,6 @@ export class ApiClustersController {
       page,
       take: limit,
     });
-    items = items.reverse();
-    return items;
   }
 
   // @Get('by_pair_id_and_tf_and_ts')
