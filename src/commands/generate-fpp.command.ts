@@ -39,6 +39,7 @@ export class GenerateFppCommand extends CommandRunner {
   }
 
   private async processFpp(pairId: number, tf: number) {
+    console.log(pairId, tf);
     const cluster2Ts = moment()
       .utc()
       .startOf('minute')
