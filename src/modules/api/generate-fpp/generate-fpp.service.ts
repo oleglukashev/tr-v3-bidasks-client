@@ -13,7 +13,6 @@ export class GenerateFppService {
   ) {}
 
   async processFpp(pairId: number, tf: number) {
-    console.log(pairId, tf);
     const cluster2Ts = moment()
       .utc()
       .startOf('minute')
@@ -94,12 +93,12 @@ export class GenerateFppService {
           parseFloat(cluster1Poc.p) > parseFloat(kline1.close),
         );
         console.log(
-          'c2 poc < k2 open',
-          parseFloat(cluster2Poc.p) < parseFloat(kline2.open),
+          'c2 poc < k2 close',
+          parseFloat(cluster2Poc.p) < parseFloat(kline2.close),
         );
         if (
           parseFloat(cluster1Poc.p) > parseFloat(kline1.close) &&
-          parseFloat(cluster2Poc.p) < parseFloat(kline2.open)
+          parseFloat(cluster2Poc.p) < parseFloat(kline2.close)
         ) {
           await this.fppEntityService.baseCreate({
             ts: kline2.ts,
