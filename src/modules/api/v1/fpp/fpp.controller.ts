@@ -28,7 +28,7 @@ export class ApiFppController {
     let items = await this.fppEntityService.findMany({
       where: {
         pairId,
-        interval: tf,
+        tf,
       },
       orderBy: { ts: 'desc' },
       page,

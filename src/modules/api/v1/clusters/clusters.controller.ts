@@ -19,7 +19,7 @@ export class ApiClustersController {
   @Get('')
   @ApiOkResponse({ description: 'List of clusters' })
   @HttpCode(HttpStatus.OK)
-  public async byIds(
+  public async index(
     @Query('pairId', new DefaultValuePipe(false), ParseIntPipe) pairId,
     @Query('tf', new DefaultValuePipe(false), ParseIntPipe) tf,
     @Query('page', new DefaultValuePipe(false), ParseIntPipe) page,
@@ -28,7 +28,7 @@ export class ApiClustersController {
     let items = await this.clustersEntityService.findMany({
       where: {
         pairId,
-        interval: tf,
+        tf,
       },
       orderBy: { ts: 'desc' },
       page,
