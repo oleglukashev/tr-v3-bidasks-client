@@ -14,6 +14,10 @@ export class AppService {
   clusters: any = {};
 
   async init(): Promise<any> {
+    await this.initTradesProcess();
+  }
+
+  private async initTradesProcess() {
     const argv: any = yargs.argv;
     const tradingServiceId: string = argv['tradingServiceId'];
     const tradingServiceData = config[tradingServiceId];
@@ -50,7 +54,7 @@ export class AppService {
     }
   }
 
-  async watchTradesProcess({ exchange, symbol, pairIdBySymbol }: any) {
+  private async watchTradesProcess({ exchange, symbol, pairIdBySymbol }: any) {
     const argv: any = yargs.argv;
     const tradingServiceId: string = argv['tradingServiceId'];
     const tradingServiceData = config[tradingServiceId];

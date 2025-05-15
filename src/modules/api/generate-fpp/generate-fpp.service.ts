@@ -1,44 +1,18 @@
-import { CommandRunner, Command, Option } from 'nest-commander';
+import { Injectable } from '@nestjs/common';
 import moment from 'moment';
-import { ClustersEntityService } from '../modules/entity-services/clusters-entity-service';
-import { getStartTsByTf } from '../utils/time';
-import { direction, pocFromCluster } from '../utils/kline';
-import { FppEntityService } from '../modules/entity-services/fpp-entity-service';
+import { getStartTsByTf } from '../../../utils/time';
+import { direction, pocFromCluster } from '../../../utils/kline';
+import { ClustersEntityService } from '../../entity-services/clusters-entity-service';
+import { FppEntityService } from '../../entity-services/fpp-entity-service';
 
-// @Injectable()
-@Command({
-  name: 'generate-fpp',
-  options: { isDefault: true },
-  description: 'Generate fpp',
-})
-export class GenerateFppCommand extends CommandRunner {
+@Injectable()
+export class GenerateFppService {
   constructor(
     private readonly clustersEntityService: ClustersEntityService,
     private readonly fppEntityService: FppEntityService,
-  ) {
-    super();
-  }
+  ) {}
 
-  @Option({
-    flags: '--pairId [number]',
-  })
-  parsePairId(value: string): number {
-    return Number(value);
-  }
-
-  @Option({
-    flags: '--tf [number]',
-  })
-  parseTf(value: string): number {
-    return Number(value);
-  }
-
-  async run(passedParams, options) {
-    await this.processFpp(options.pairId, options.tf);
-    console.log('Complete');
-  }
-
-  private async processFpp(pairId: number, tf: number) {
+  async processFpp(pairId: number, tf: number) {
     console.log(pairId, tf);
     const cluster2Ts = moment()
       .utc()
