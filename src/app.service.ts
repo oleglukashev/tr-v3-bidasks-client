@@ -91,7 +91,7 @@ export class AppService {
             ];
 
           for (const trade of trades) {
-            const startTs = getStartTsByTf(trade.ts, parseInt(tf));
+            const startTs = getStartTsByTf(trade.timestamp, parseInt(tf));
 
             let priceCluster =
               Math.ceil(parseFloat(trade.price) / clusterSize) * clusterSize;
