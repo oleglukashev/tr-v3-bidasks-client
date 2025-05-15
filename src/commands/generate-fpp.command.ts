@@ -1,0 +1,164 @@
+import { CommandRunner, Command, Option } from 'nest-commander';
+import moment from 'moment';
+import { ClustersEntityService } from '../modules/entity-services/clusters-entity-service';
+import { getStartTsByTf } from '../utils/time';
+import { direction, pocFromCluster } from '../utils/kline';
+import { FppEntityService } from '../modules/entity-services/fpp-entity-service';
+
+// @Injectable()
+@Command({
+  name: 'generate-fpp',
+  options: { isDefault: true },
+  description: 'Generate fpp',
+})
+export class GenerateFppCommand extends CommandRunner {
+  constructor(
+    private readonly clustersEntityService: ClustersEntityService,
+    private readonly fppEntityService: FppEntityService,
+  ) {
+    super();
+  }
+
+  @Option({
+    flags: '--pairId [number]',
+  })
+  parsePairId(value: string): number {
+    return Number(value);
+  }
+
+  @Option({
+    flags: '--tf [number]',
+  })
+  parseTf(value: string): number {
+    return Number(value);
+  }
+
+  async run(passedParams, options) {
+    await this.processFpp(options.pairId, options.tf);
+    console.log('Complete');
+  }
+
+  private async processFpp(pairId: number, tf: number) {
+    const cluster2Ts = moment()
+      .utc()
+      .startOf('minute')
+      .subtract(tf, 'minute')
+      .valueOf();
+    const cluster1Ts = moment()
+      .utc()
+      .startOf('minute')
+      .subtract(2 * tf, 'minute')
+      .valueOf();
+    const cluster2 = await this.clustersEntityService.findFirst({
+      where: {
+        ts: { equals: getStartTsByTf(cluster2Ts, tf) },
+        pairId: { equals: pairId },
+        tf: { equals: tf },
+      },
+    });
+
+    const cluster1 = await this.clustersEntityService.findFirst({
+      where: {
+        ts: { equals: getStartTsByTf(cluster1Ts, tf) },
+        pairId: { equals: pairId },
+        tf: { equals: tf },
+      },
+    });
+
+    if (!cluster1 || !cluster2) {
+      console.log(`${pairId},${tf}: Not enough clusters data`);
+      return;
+    }
+
+    const kline1Res = await fetch(
+      `http://klines.traken-trade.ru/api/v1/klines/by_pair_id_and_tf_and_ts?pairId=${pairId}&ts=${cluster1.ts}&tf=${tf}`,
+    );
+    const kline2Res = await fetch(
+      `http://klines.traken-trade.ru/api/v1/klines/by_pair_id_and_tf_and_ts?pairId=${pairId}&ts=${cluster2.ts}&tf=${tf}`,
+    );
+    const kline1 = await kline1Res.json();
+    const kline2 = await kline2Res.json();
+
+    await this.checkInterceptionPattern(
+      cluster1,
+      cluster2,
+      kline1,
+      kline2,
+      pairId,
+      tf,
+    );
+  }
+
+  private async checkInterceptionPattern(
+    cluster1: any,
+    cluster2: any,
+    kline1: any,
+    kline2: any,
+    pairId: number,
+    tf: number,
+  ) {
+    if (!kline1 || !kline2) {
+      console.log(`${pairId},${tf}: Not enough klines data`);
+    }
+
+    const cluster1Poc: any = pocFromCluster(cluster1);
+    const cluster2Poc: any = pocFromCluster(cluster2);
+
+    if (!cluster1Poc || !cluster2Poc) {
+      console.log(`${pairId},${tf}: Not enough poc data`);
+    }
+
+    const kline1Direction = direction(kline1);
+    const kline2Direction = direction(kline2);
+
+    if (kline1Direction !== kline2Direction) {
+      if (kline1Direction === 'up') {
+        // down reverse
+        console.log(
+          'c1 poc > k1 close',
+          parseFloat(cluster1Poc.p) > parseFloat(kline1.close),
+        );
+        console.log(
+          'c2 poc < k2 open',
+          parseFloat(cluster2Poc.p) < parseFloat(kline2.open),
+        );
+        if (
+          parseFloat(cluster1Poc.p) > parseFloat(kline1.close) &&
+          parseFloat(cluster2Poc.p) < parseFloat(kline2.open)
+        ) {
+          await this.fppEntityService.baseCreate({
+            ts: kline2.ts,
+            pairId,
+            tf,
+            direction: 'down',
+          });
+        }
+      } else {
+        // up reverse
+        console.log(
+          'c1 poc < k1 close',
+          parseFloat(cluster1Poc.p) < parseFloat(kline1.close),
+        );
+        console.log(
+          'c2 poc > k2 open',
+          parseFloat(cluster2Poc.p) > parseFloat(kline2.open),
+        );
+        if (
+          parseFloat(cluster1Poc.p) < parseFloat(kline1.close) &&
+          parseFloat(cluster2Poc.p) > parseFloat(kline2.open)
+        ) {
+          await this.fppEntityService.baseCreate({
+            ts: kline2.ts,
+            pairId,
+            tf,
+            direction: 'up',
+          });
+        }
+      }
+    }
+    console.log('kline1', kline1);
+    console.log('kline2', kline2);
+    console.log('cluster1Poc', cluster1Poc);
+    console.log('cluster2Poc', cluster2Poc);
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "name": "tr-v3-klines",
+  "name": "tr-v3-bidasks",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -54,9 +54,9 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.8.1",
-    "yargs": "^17.7.2",
     "uuid": "^11.1.0",
-    "ws": "^8.18.1"
+    "ws": "^8.18.1",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

@@ -3,9 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BaseEntityService } from './base.service';
 
 @Injectable()
-export class KlinesEntityService extends BaseEntityService {
-  constructor(klinesPrismaService: PrismaService) {
-    super(klinesPrismaService, 'kline');
+export class FppEntityService extends BaseEntityService {
+  constructor(fppPrismaService: PrismaService) {
+    super(fppPrismaService, 'fpp');
   }
 
   public override async preBaseCreate(data) {

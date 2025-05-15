@@ -56,7 +56,16 @@
         "tickers": {
           "49": {
             "symbol": "KASUSDT",
-            "tickerAnswerSymbol": "KAS/USDT:USDT"
+            "tickerAnswerSymbol": "KAS/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.00002,
+              "5": 0.00002,
+              "15": 0.00002,
+              "30": 0.00004,
+              "60": 0.00004,
+              "240": 0.00004,
+              "1440": 0.0002
+            }
           },
           "50": {
             "symbol": "BTCUSDT",
@@ -100,9 +109,6 @@
           }
         }
       }
-    },
-    "timeframes": [
-      "1m", "5m", "15m", "30m", "1h", "4h", "1d"
-    ]
+    }
   }
 }

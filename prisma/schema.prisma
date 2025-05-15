@@ -17,21 +17,52 @@ generator dbml {
   provider = "prisma-dbml-generator"
 }
 
-model Kline {
-  id       String @id @unique @default(uuid())
-  open     String @db.VarChar(50)
-  close    String @db.VarChar(50)
-  low      String @db.VarChar(50)
-  high     String @db.VarChar(50)
-  volume   String @db.VarChar(50)
-  ts       BigInt
-  interval Int    @default(1)
+model Trade {
+  id     String @id @unique @default(uuid())
+  ts     BigInt
+  side   String @db.VarChar(10)
+  price  String @db.VarChar(50)
+  amount String @db.VarChar(50)
+  cost   String @db.VarChar(50)
 
   pairId Int @map("pair_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([ts, pairId, interval])
-  @@map("klines")
+  @@map("trades")
+}
+
+model Cluster {
+  id   String @id @unique @default(uuid())
+  ts   BigInt
+  tf   Int    @default(1)
+  data Json   @default("{}")
+  v    Int    @default(0)
+
+  pairId Int @map("pair_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([ts, tf, pairId])
+  @@index([pairId])
+  @@map("clusters")
+}
+
+model Fpp {
+  id        String @id @unique @default(uuid())
+  ts        BigInt
+  tf        Int    @default(1)
+  direction String @default("up")
+  type      String @default("interception")
+
+  pairId Int @map("pair_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([ts, tf, pairId])
+  @@index([pairId])
+  @@map("fpp")
 }

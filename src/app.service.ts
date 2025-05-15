@@ -1,31 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import yargs from 'yargs';
-import { KlinesEntityService } from './modules/entity-services/klines-entity-service';
-import http from 'http';
-import WebSocket from 'ws';
-import { v4 as uuidv4 } from 'uuid';
+import { ClustersEntityService } from './modules/entity-services/clusters-entity-service';
 import config from './config/config.json';
 import ccxt from 'ccxt';
+import { getStartTsByTf } from './utils/time';
+import * as process from 'node:process';
 import sentToBot from './utils/bot';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly klinesEntityService: KlinesEntityService) {}
+  constructor(private readonly clustersEntityService: ClustersEntityService) {}
 
-  readonly intervalByTf: any = {
-    '1m': 1,
-    '5m': 5,
-    '15m': 15,
-    '30m': 30,
-    '1h': 60,
-    '4h': 240,
-    '1d': 1440,
-  };
-
-  server = http.createServer();
-  wss = new WebSocket.Server({ server: this.server });
-  wsSubscriptions = new Map();
-  pairIdBySymbol: any = {};
+  clusters: any = {};
 
   async init(): Promise<any> {
     const argv: any = yargs.argv;
@@ -37,6 +23,7 @@ export class AppService {
       throw new Error(`No exchnage ${argv.exchange} in ccxt pro`);
     }
 
+    const pairIdBySymbol: any = {};
     //for (const type in tradingServiceData.types) {
     const exchange = new ccxtProClass({
       enableRateLimit: true,
@@ -51,139 +38,135 @@ export class AppService {
 
     for (const pairId in tradingServiceData.types.future.tickers) {
       const symbol = tradingServiceData.types.future.tickers[pairId].symbol;
-      const tickerAnswerSymbol =
-        tradingServiceData.types.future.tickers[pairId].tickerAnswerSymbol;
+      //const tickerAnswerSymbol = tradingServiceData.types[type].tickers[pairId].tickerAnswerSymbol;
       symbols.push(symbol);
-      this.pairIdBySymbol[tickerAnswerSymbol] = pairId;
+      pairIdBySymbol[symbol] = pairId;
     }
 
     await exchange.loadMarkets();
-    const subscriptions = [];
+
     for (const symbol of symbols) {
-      for (const tf of tradingServiceData.timeframes) {
-        subscriptions.push([symbol, tf]);
+      this.watchTradesProcess({ exchange, symbol, pairIdBySymbol });
+    }
+  }
+
+  async watchTradesProcess({ exchange, symbol, pairIdBySymbol }: any) {
+    const argv: any = yargs.argv;
+    const tradingServiceId: string = argv['tradingServiceId'];
+    const tradingServiceData = config[tradingServiceId];
+    const pairId = pairIdBySymbol[symbol];
+    if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
+      if (!this.clusters[pairId]) {
+        this.clusters[pairId] = {};
+      }
+      for (const tf in tradingServiceData.types.future.tickers[pairId]
+        .clusterPrecision) {
+        this.clusters[pairId][tf] = {};
       }
     }
-    this.initWsManager();
-    this.server.listen(process.env.WS_PORT, () => {
-      console.log(
-        `WebSocket сервер работает на http://localhost:${process.env.WS_PORT}`,
-      );
-    });
-    await this.watchKlinesProcess({ exchange, subscriptions });
-    // }
-  }
 
-  private initWsManager() {
-    // Обработка нового подключения
-    this.wss.on('connection', (ws: any) => {
-      const connectionId = uuidv4();
-      ws.id = connectionId;
-      console.log('Клиент подключен');
-
-      ws.on('message', async (msg: any) => {
-        try {
-          const data = JSON.parse(msg);
-          if (data.type === 'subscribe' && data.pairId && data.tf) {
-            this.wsSubscriptions.set(ws.id, {
-              ws,
-              tf: data.tf,
-              pairId: data.pairId,
-            });
-            console.log(`Подписка клиента: ${data.pairId} @ ${data.tf}`);
-          }
-        } catch (e) {
-          console.error('Ошибка обработки сообщения:', e);
-        }
-      });
-
-      ws.on('close', () => {
-        this.wsSubscriptions.delete(ws.id);
-        console.log('Клиент отключён');
-      });
-    });
-  }
-
-  async watchKlinesProcess({ exchange, subscriptions }: any) {
     while (true) {
+      let trades: any[] = [];
       try {
         // Получаем данные по тикеру через WebSocket
-        const klines = await exchange.watchOHLCVForSymbols(subscriptions);
-        console.log(klines);
-        for (const key in klines) {
-          let pairId = null;
-          if (this.pairIdBySymbol[key]) {
-            pairId = parseInt(this.pairIdBySymbol[key]);
-          } else {
-            continue;
-          }
-          for (const tf in klines[key]) {
-            for (const kline of klines[key][tf]) {
-              let dbKline = null;
+        trades = await exchange.watchTrades(symbol);
+      } catch (error: any) {
+        console.error('WebSocket connection error:', error.message);
+        console.log('Reconnecting in 2 seconds...');
+        await sentToBot(`bidasks microservice: ${symbol} - ${error.message}`);
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Задержка перед переподключением
+      }
+
+      // if cluster precision config exist
+      if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
+        for (const tf in tradingServiceData.types.future.tickers[pairId]
+          .clusterPrecision) {
+          const clusterSize =
+            tradingServiceData.types.future.tickers[pairId].clusterPrecision[
+              tf
+            ];
+
+          for (const trade of trades) {
+            const startTs = getStartTsByTf(trade.ts, parseInt(tf));
+
+            let priceCluster =
+              Math.ceil(parseFloat(trade.price) / clusterSize) * clusterSize;
+            priceCluster = Number(
+              priceCluster.toFixed(clusterSize.toString().split('.')[1].length),
+            );
+
+            // if no startTs in clusters clear this tf clusters and create new cluster
+            if (!this.clusters[pairId][tf]?.[startTs]) {
+              this.clusters[pairId][tf] = {};
 
               try {
-                dbKline = await this.klinesEntityService.baseCreate({
-                  ts: kline[0],
-                  open: kline[1].toString(),
-                  high: kline[2].toString(),
-                  low: kline[3].toString(),
-                  close: kline[4].toString(),
-                  volume: kline[5].toString(),
-                  pairId,
-                  interval: this.intervalByTf[tf],
-                });
-              } catch (e: any) {
-                if (e.code == 'P2002') {
-                  const existKline = await this.klinesEntityService.findFirst({
+                console.log('create cluster');
+                this.clusters[pairId][tf][startTs] =
+                  await this.clustersEntityService.baseCreate({
+                    data: {},
+                    ts: startTs,
+                    pairId: parseInt(pairId),
+                    tf: parseInt(tf),
+                  });
+              } catch (e) {
+                this.clusters[pairId][tf][startTs] =
+                  await this.clustersEntityService.findFirst({
                     where: {
-                      ts: kline[0],
-                      pairId,
-                      interval: this.intervalByTf[tf],
+                      ts: { equals: startTs },
+                      pairId: { equals: parseInt(pairId) },
+                      tf: { equals: parseInt(tf) },
                     },
                   });
-                  if (existKline) {
-                    dbKline = await this.klinesEntityService.baseUpdate(
-                      existKline.id,
-                      {
-                        open: kline[1].toString(),
-                        high: kline[2].toString(),
-                        low: kline[3].toString(),
-                        close: kline[4].toString(),
-                        volume: kline[5].toString(),
-                      },
-                    );
-                  }
-                } else {
-                  console.log(e);
-                }
+                console.log(e);
               }
+            }
 
-              if (dbKline) {
-                const arr: any[] = Array.from(this.wsSubscriptions.values());
-                for (const wsData of arr) {
-                  if (
-                    wsData.ws.readyState === WebSocket.OPEN &&
-                    wsData.tf === this.intervalByTf[tf] &&
-                    wsData.pairId === pairId
-                  ) {
-                    wsData.ws.send(
-                      JSON.stringify({
-                        type: 'kline',
-                        data: { ...dbKline, ts: dbKline.ts.toString() },
-                      }),
-                    );
-                  }
-                }
-              }
+            if (!this.clusters[pairId][tf]?.[startTs].data?.[priceCluster]) {
+              this.clusters[pairId][tf][startTs].data[priceCluster] = {
+                p: priceCluster.toString(),
+                v: 0,
+                bv: 0,
+                sv: 0,
+              };
+            }
+
+            const priceClusterData =
+              this.clusters[pairId][tf][startTs].data[priceCluster];
+            const tradeVolume = trade.amount;
+            this.clusters[pairId][tf][startTs].v += parseInt(tradeVolume);
+            priceClusterData.v = (
+              parseFloat(priceClusterData.v) + parseFloat(tradeVolume)
+            ).toString();
+
+            if (trade.side === 'buy') {
+              priceClusterData.bv = (
+                parseFloat(priceClusterData.bv) + parseFloat(tradeVolume)
+              ).toString();
+            } else if (trade.side === 'sell') {
+              priceClusterData.sv = (
+                parseFloat(priceClusterData.sv) + parseFloat(tradeVolume)
+              ).toString();
+            }
+
+            this.clusters[pairId][tf][startTs].data[priceCluster] =
+              priceClusterData;
+
+            try {
+              console.log(`${pairId},${tf}: update cluster`);
+              await this.clustersEntityService.baseUpdate(
+                this.clusters[pairId][tf][startTs].id,
+                {
+                  v: this.clusters[pairId][tf][startTs].v,
+                  data: this.clusters[pairId][tf][startTs].data,
+                },
+              );
+            } catch (e) {
+              console.log(e);
             }
           }
         }
-      } catch (error: any) {
-        console.error('WebSocket connection error:', error.message);
-        console.log('Reconnecting in 3 seconds...');
-        await sentToBot(error.message);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
+      console.log(`added ${trades.length} ${symbol} markets bidasks`);
     }
   }
 }
