@@ -4,6 +4,7 @@ import moment from 'moment';
 import yargs from 'yargs';
 import config from '../../../config/config.json';
 import { GenerateFppService } from './generate-fpp.service';
+import { getStartTsByTf, startOfMinuteTs } from '../../../utils/time';
 
 @Injectable()
 export class GenerateFppCronService {
@@ -14,20 +15,30 @@ export class GenerateFppCronService {
     const argv: any = yargs.argv;
     const tradingServiceId: string = argv['tradingServiceId'];
     const tradingServiceData = config[tradingServiceId];
+    const now = startOfMinuteTs();
     console.log(moment().format('YYYY-MM-DD HH:mm:ss'));
     for (const pairId in tradingServiceData.types.future.tickers) {
       await this.generateFppService.processFpp(parseInt(pairId), 1);
-    }
-  }
 
-  @Cron('*/5 * * * *')
-  async handleEvery5MinutesCron() {
-    const argv: any = yargs.argv;
-    const tradingServiceId: string = argv['tradingServiceId'];
-    const tradingServiceData = config[tradingServiceId];
-    console.log(moment().format('YYYY-MM-DD HH:mm:ss'));
-    for (const pairId in tradingServiceData.types.future.tickers) {
-      await this.generateFppService.processFpp(parseInt(pairId), 5);
+      if (now === getStartTsByTf(now, 5)) {
+        await this.generateFppService.processFpp(parseInt(pairId), 5);
+      }
+
+      if (now === getStartTsByTf(now, 15)) {
+        await this.generateFppService.processFpp(parseInt(pairId), 15);
+      }
+
+      if (now === getStartTsByTf(now, 30)) {
+        await this.generateFppService.processFpp(parseInt(pairId), 30);
+      }
+
+      if (now === getStartTsByTf(now, 60)) {
+        await this.generateFppService.processFpp(parseInt(pairId), 60);
+      }
+
+      if (now === getStartTsByTf(now, 240)) {
+        await this.generateFppService.processFpp(parseInt(pairId), 240);
+      }
     }
   }
 }
