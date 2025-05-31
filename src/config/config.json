@@ -90,11 +90,29 @@
           },
           "53": {
             "symbol": "PYTHUSDT",
-            "tickerAnswerSymbol": "PYTH/USDT:USDT"
+            "tickerAnswerSymbol": "PYTH/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.0001,
+              "5": 0.0001,
+              "15": 0.0001,
+              "30": 0.0001,
+              "60": 0.0001,
+              "240": 0.0001,
+              "1440": 0.0005
+            }
           },
           "54": {
             "symbol": "SOLUSDT",
-            "tickerAnswerSymbol": "SOL/USDT:USDT"
+            "tickerAnswerSymbol": "SOL/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.02,
+              "5": 0.02,
+              "15": 0.02,
+              "30": 0.04,
+              "60": 0.04,
+              "240": 0.04,
+              "1440": 0.2
+            }
           },
           "55": {
             "symbol": "AVAXUSDT",
