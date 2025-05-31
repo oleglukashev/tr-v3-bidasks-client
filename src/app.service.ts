@@ -104,7 +104,6 @@ export class AppService {
               this.clusters[pairId][tf] = {};
 
               try {
-                console.log('create cluster');
                 this.clusters[pairId][tf][startTs] =
                   await this.clustersEntityService.baseCreate({
                     data: {},
@@ -156,7 +155,6 @@ export class AppService {
               priceClusterData;
 
             try {
-              console.log(`${pairId},${tf}: update cluster`);
               await this.clustersEntityService.baseUpdate(
                 this.clusters[pairId][tf][startTs].id,
                 {
@@ -170,7 +168,6 @@ export class AppService {
           }
         }
       }
-      console.log(`added ${trades.length} ${symbol} markets bidasks`);
     }
   }
 }
