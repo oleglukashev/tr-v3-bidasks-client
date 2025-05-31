@@ -58,7 +58,6 @@
             "symbol": "KASUSDT",
             "tickerAnswerSymbol": "KAS/USDT:USDT",
             "clusterPrecision": {
-              "1": 0.00002,
               "5": 0.00002,
               "15": 0.00002,
               "30": 0.00004,
@@ -79,7 +78,6 @@
             "symbol": "LINKUSDT",
             "tickerAnswerSymbol": "LINK/USDT:USDT",
             "clusterPrecision": {
-              "1": 0.002,
               "5": 0.002,
               "15": 0.002,
               "30": 0.004,
@@ -92,7 +90,6 @@
             "symbol": "PYTHUSDT",
             "tickerAnswerSymbol": "PYTH/USDT:USDT",
             "clusterPrecision": {
-              "1": 0.0001,
               "5": 0.0001,
               "15": 0.0001,
               "30": 0.0001,
@@ -105,7 +102,6 @@
             "symbol": "SOLUSDT",
             "tickerAnswerSymbol": "SOL/USDT:USDT",
             "clusterPrecision": {
-              "1": 0.02,
               "5": 0.02,
               "15": 0.02,
               "30": 0.04,
