@@ -77,7 +77,16 @@
           },
           "52": {
             "symbol": "LINKUSDT",
-            "tickerAnswerSymbol": "LINK/USDT:USDT"
+            "tickerAnswerSymbol": "LINK/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.002,
+              "5": 0.002,
+              "15": 0.002,
+              "30": 0.004,
+              "60": 0.004,
+              "240": 0.004,
+              "1440": 0.02
+            }
           },
           "53": {
             "symbol": "PYTHUSDT",
