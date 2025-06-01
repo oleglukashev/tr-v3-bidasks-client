@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import moment from 'moment';
-import { getStartTsByTf } from '../../utils/time';
 import { direction, pocFromCluster } from '../../utils/kline';
 import { ClustersEntityService } from '../entity-services/clusters-entity-service';
 import { FppEntityService } from '../entity-services/fpp-entity-service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
-import { getClusterKeyByPairIdTsTf } from '../../utils/redis';
+import { getCluster, getClusterKeyByPairIdTsTf } from '../../utils/redis';
 
 @Injectable()
 export class GenerateFppService {
@@ -27,14 +26,10 @@ export class GenerateFppService {
       .startOf('minute')
       .subtract(2 * tf, 'minute')
       .valueOf();
-
-    const cluster2: any = await this.redis.hgetall(
-      getClusterKeyByPairIdTsTf(pairId, tf, cluster2Ts),
-    );
-    const cluster1: any = await this.redis.hgetall(
-      getClusterKeyByPairIdTsTf(pairId, tf, cluster1Ts),
-    );
-
+    const cluster2Key = getClusterKeyByPairIdTsTf(pairId, tf, cluster2Ts);
+    const cluster1Key = getClusterKeyByPairIdTsTf(pairId, tf, cluster1Ts);
+    const cluster2: any = await getCluster(cluster2Key, this.redis);
+    const cluster1: any = await getCluster(cluster1Key, this.redis);
     // const cluster2 = await this.clustersEntityService.findFirst({
     //   where: {
     //     ts: { equals: getStartTsByTf(cluster2Ts, tf) },
