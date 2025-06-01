@@ -8,6 +8,7 @@ import { GenerateFppModule } from './modules/generate-fpp/generate-fpp.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ApiFppModule } from './modules/api/v1/fpp/fpp.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { MoveClustersFromRedisToBdModule } from './modules/move-clusters-from-redis-to-bd/move-clusters-from-redis-to-bd.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
     EntityModule,
     PrismaModule,
     GenerateFppModule,
+    MoveClustersFromRedisToBdModule,
     ApiClustersModule,
     ApiFppModule,
   ],
