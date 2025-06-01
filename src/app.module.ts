@@ -7,11 +7,20 @@ import { ApiClustersModule } from './modules/api/v1/clusters/clusters.module';
 import { GenerateFppModule } from './modules/api/generate-fpp/generate-fpp.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ApiFppModule } from './modules/api/v1/fpp/fpp.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     ScheduleModule.forRoot(),
+    RedisModule.forRoot(
+      {
+        type: 'single',
+        url: 'redis://localhost:6379',
+        options: { db: 5 },
+      },
+      'bidasksDb',
+    ),
     EntityModule,
     PrismaModule,
     GenerateFppModule,

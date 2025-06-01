@@ -6,12 +6,17 @@ import ccxt from 'ccxt';
 import { getStartTsByTf } from './utils/time';
 import * as process from 'node:process';
 import sentToBot from './utils/bot';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly clustersEntityService: ClustersEntityService) {}
+  constructor(
+    @InjectRedis('bidasksDb') private readonly redis: Redis,
+    private readonly clustersEntityService: ClustersEntityService,
+  ) {}
 
-  clusters: any = {};
+  //clusters: any = {};
 
   async init(): Promise<any> {
     await this.initTradesProcess();
@@ -60,13 +65,18 @@ export class AppService {
     const tradingServiceData = config[tradingServiceId];
     const pairId = pairIdBySymbol[symbol];
     if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
-      if (!this.clusters[pairId]) {
-        this.clusters[pairId] = {};
-      }
-      for (const tf in tradingServiceData.types.future.tickers[pairId]
-        .clusterPrecision) {
-        this.clusters[pairId][tf] = {};
-      }
+      // const clusterByPairId = await this.redis.get(`clusters:${pairId}`);
+      // if (!clusterByPairId) {
+      //   await this.redis.hmset(`clusters:${pairId}`, {});
+      //   //this.clusters[pairId] = {};
+      // }
+      // if (!this.clusters[pairId]) {
+      //   this.clusters[pairId] = {};
+      // }
+      // for (const tf in tradingServiceData.types.future.tickers[pairId]
+      //   .clusterPrecision) {
+      //   this.clusters[pairId][tf] = {};
+      // }
     }
 
     while (true) {
@@ -100,32 +110,57 @@ export class AppService {
             );
 
             // if no startTs in clusters clear this tf clusters and create new cluster
-            if (!this.clusters[pairId][tf]?.[startTs]) {
-              this.clusters[pairId][tf] = {};
+            // if (!this.clusters[pairId][tf]?.[startTs]) {
+            let cluster: any = await this.redis.get(
+              `clusters:${pairId}:${tf}:${startTs}`,
+            );
+            if (!cluster) {
+              // this.clusters[pairId][tf] = {};
 
               try {
-                this.clusters[pairId][tf][startTs] =
-                  await this.clustersEntityService.baseCreate({
-                    data: {},
-                    ts: startTs,
-                    pairId: parseInt(pairId),
-                    tf: parseInt(tf),
-                  });
+                // this.clusters[pairId][tf][startTs] =
+                //   await this.clustersEntityService.baseCreate({
+                //     data: {},
+                //     ts: startTs,
+                //     pairId: parseInt(pairId),
+                //     tf: parseInt(tf),
+                //   });
+                cluster = await this.clustersEntityService.baseCreate({
+                  data: {},
+                  ts: startTs,
+                  pairId: parseInt(pairId),
+                  tf: parseInt(tf),
+                });
+                await this.redis.hmset(
+                  `clusters:${pairId}:${tf}:${startTs}`,
+                  cluster,
+                );
               } catch (e) {
-                this.clusters[pairId][tf][startTs] =
-                  await this.clustersEntityService.findFirst({
-                    where: {
-                      ts: { equals: startTs },
-                      pairId: { equals: parseInt(pairId) },
-                      tf: { equals: parseInt(tf) },
-                    },
-                  });
+                // this.clusters[pairId][tf][startTs] =
+                //   await this.clustersEntityService.findFirst({
+                //     where: {
+                //       ts: { equals: startTs },
+                //       pairId: { equals: parseInt(pairId) },
+                //       tf: { equals: parseInt(tf) },
+                //     },
+                //   });
+                cluster = await this.clustersEntityService.findFirst({
+                  where: {
+                    ts: { equals: startTs },
+                    pairId: { equals: parseInt(pairId) },
+                    tf: { equals: parseInt(tf) },
+                  },
+                });
+                await this.redis.hmset(
+                  `clusters:${pairId}:${tf}:${startTs}`,
+                  cluster,
+                );
                 console.log(e);
               }
             }
 
-            if (!this.clusters[pairId][tf]?.[startTs].data?.[priceCluster]) {
-              this.clusters[pairId][tf][startTs].data[priceCluster] = {
+            if (!cluster.data?.[priceCluster]) {
+              cluster.data[priceCluster] = {
                 p: priceCluster.toString(),
                 v: 0,
                 bv: 0,
@@ -133,10 +168,9 @@ export class AppService {
               };
             }
 
-            const priceClusterData =
-              this.clusters[pairId][tf][startTs].data[priceCluster];
+            const priceClusterData = cluster.data[priceCluster];
             const tradeVolume = trade.amount;
-            this.clusters[pairId][tf][startTs].v += parseInt(tradeVolume);
+            cluster.v += parseInt(tradeVolume);
             priceClusterData.v = (
               parseFloat(priceClusterData.v) + parseFloat(tradeVolume)
             ).toString();
@@ -151,16 +185,19 @@ export class AppService {
               ).toString();
             }
 
-            this.clusters[pairId][tf][startTs].data[priceCluster] =
-              priceClusterData;
+            cluster.data[priceCluster] = priceClusterData;
 
             try {
-              await this.clustersEntityService.baseUpdate(
-                this.clusters[pairId][tf][startTs].id,
-                {
-                  v: this.clusters[pairId][tf][startTs].v,
-                  data: this.clusters[pairId][tf][startTs].data,
-                },
+              // await this.clustersEntityService.baseUpdate(
+              //   this.clusters[pairId][tf][startTs].id,
+              //   {
+              //     v: this.clusters[pairId][tf][startTs].v,
+              //     data: this.clusters[pairId][tf][startTs].data,
+              //   },
+              // );
+              await this.redis.hmset(
+                `clusters:${pairId}:${tf}:${startTs}`,
+                cluster,
               );
             } catch (e) {
               console.log(e);
