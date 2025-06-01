@@ -114,8 +114,6 @@ export class AppService {
             const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, startTs);
             let cluster: any = await getCluster(clusterKey, this.redis);
             //let cluster: any = await this.redis.hgetall(clusterKey);
-            console.log('type', typeof cluster);
-            console.log('data', cluster);
             if (!cluster?.id) {
               // this.clusters[pairId][tf] = {};
 
