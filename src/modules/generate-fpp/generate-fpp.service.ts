@@ -6,6 +6,7 @@ import { ClustersEntityService } from '../entity-services/clusters-entity-servic
 import { FppEntityService } from '../entity-services/fpp-entity-service';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
+import { getClusterKeyByPairIdTsTf } from '../../utils/redis';
 
 @Injectable()
 export class GenerateFppService {
@@ -27,11 +28,11 @@ export class GenerateFppService {
       .subtract(2 * tf, 'minute')
       .valueOf();
 
-    const cluster2: any = await this.redis.get(
-      `clusters:pairId_${pairId}:tf_${tf}:startTs_${cluster2Ts}`,
+    const cluster2: any = await this.redis.hgetall(
+      getClusterKeyByPairIdTsTf(pairId, tf, cluster2Ts),
     );
-    const cluster1: any = await this.redis.get(
-      `clusters:pairId_${pairId}:tf_${tf}:startTs_${cluster1Ts}`,
+    const cluster1: any = await this.redis.hgetall(
+      getClusterKeyByPairIdTsTf(pairId, tf, cluster1Ts),
     );
 
     // const cluster2 = await this.clustersEntityService.findFirst({

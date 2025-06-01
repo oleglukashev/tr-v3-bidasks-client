@@ -8,6 +8,11 @@ import * as process from 'node:process';
 import sentToBot from './utils/bot';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
+import {
+  getCluster,
+  getClusterKeyByPairIdTsTf,
+  saveCluster,
+} from './utils/redis';
 
 @Injectable()
 export class AppService {
@@ -65,7 +70,7 @@ export class AppService {
     const tradingServiceData = config[tradingServiceId];
     const pairId = pairIdBySymbol[symbol];
     if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
-      // const clusterByPairId = await this.redis.get(`clusters:${pairId}`);
+      // const clusterByPairId = await this.redis.hgetall(`clusters:${pairId}`);
       // if (!clusterByPairId) {
       //   await this.redis.hmset(`clusters:${pairId}`, {});
       //   //this.clusters[pairId] = {};
@@ -106,9 +111,12 @@ export class AppService {
             const priceCluster = this.getPriceCluster(trade, clusterSize);
             // if no startTs in clusters clear this tf clusters and create new cluster
             // if (!this.clusters[pairId][tf]?.[startTs]) {
-            const clusterKey = `clusters:pairId_${pairId}:tf_${tf}:startTs_${startTs}`;
-            let cluster: any = await this.redis.get(clusterKey);
-            if (!cluster) {
+            const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, startTs);
+            let cluster: any = await getCluster(clusterKey, this.redis);
+            //let cluster: any = await this.redis.hgetall(clusterKey);
+            console.log('type', typeof cluster);
+            console.log('data', cluster);
+            if (!cluster?.id) {
               // this.clusters[pairId][tf] = {};
 
               try {
@@ -125,7 +133,8 @@ export class AppService {
                   pairId: parseInt(pairId),
                   tf: tf,
                 });
-                await this.redis.hmset(clusterKey, cluster);
+                await saveCluster(clusterKey, cluster, this.redis);
+                //await this.redis.hmset(clusterKey, JSON.stringify(cluster));
               } catch (e) {
                 // this.clusters[pairId][tf][startTs] =
                 //   await this.clustersEntityService.findFirst({
@@ -142,7 +151,8 @@ export class AppService {
                     tf: { equals: tf },
                   },
                 });
-                await this.redis.hmset(clusterKey, cluster);
+                await saveCluster(clusterKey, cluster, this.redis);
+                //await this.redis.hmset(clusterKey, cluster);
                 console.log(e);
               }
             }
@@ -169,10 +179,11 @@ export class AppService {
               //     data: this.clusters[pairId][tf][startTs].data,
               //   },
               // );
-              await this.redis.hmset(
-                `clusters:${pairId}:${tf}:${startTs}`,
-                cluster,
-              );
+              await saveCluster(clusterKey, cluster, this.redis);
+              // await this.redis.hmset(
+              //   `clusters:${pairId}:${tf}:${startTs}`,
+              //   JSON.stringify(cluster),
+              // );
             } catch (e) {
               console.log(e);
             }
@@ -202,16 +213,16 @@ export class AppService {
   private updatePriceClusterData(priceClusterData: any, trade: any) {
     const tradeVolume = trade.amount;
     const result: any = { ...priceClusterData };
-    result.v = (
-      parseFloat(priceClusterData.v) + parseFloat(tradeVolume)
+    result.v = Number(
+      (parseFloat(priceClusterData.v) + parseFloat(tradeVolume)).toFixed(2),
     ).toString();
     if (trade.side === 'buy') {
-      result.bv = (
-        parseFloat(priceClusterData.bv) + parseFloat(tradeVolume)
+      result.bv = Number(
+        (parseFloat(priceClusterData.bv) + parseFloat(tradeVolume)).toFixed(2),
       ).toString();
     } else if (trade.side === 'sell') {
-      result.sv = (
-        parseFloat(priceClusterData.sv) + parseFloat(tradeVolume)
+      result.sv = Number(
+        (parseFloat(priceClusterData.sv) + parseFloat(tradeVolume)).toFixed(2),
       ).toString();
     }
     return result;
