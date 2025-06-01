@@ -3,7 +3,7 @@ import { ClustersEntityService } from '../entity-services/clusters-entity-servic
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import moment from 'moment/moment';
-import { getClusterKeyByPairIdTsTf } from '../../utils/redis';
+import { getCluster, getClusterKeyByPairIdTsTf } from '../../utils/redis';
 
 @Injectable()
 export class MoveClustersFromRedisToBdService {
@@ -27,18 +27,19 @@ export class MoveClustersFromRedisToBdService {
     });
 
     for (const cluster of clusters) {
-      const redisItem: any = await this.redis.hgetall(
-        getClusterKeyByPairIdTsTf(cluster.pairId, cluster.tf, cluster.ts),
+      const clusterKey = getClusterKeyByPairIdTsTf(
+        cluster.pairId,
+        cluster.tf,
+        cluster.ts,
       );
+      const redisItem: any = await getCluster(clusterKey, this.redis);
 
       if (redisItem) {
         await this.clustersEntityService.baseUpdate(cluster.id, {
           ...redisItem,
           id: undefined,
         });
-        await this.redis.del(
-          getClusterKeyByPairIdTsTf(cluster.pairId, cluster.tf, cluster.ts),
-        );
+        await this.redis.del(clusterKey);
       }
     }
   }
