@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import moment from 'moment';
 import yargs from 'yargs';
-import config from '../../../config/config.json';
+import config from '../../config/config.json';
 import { GenerateFppService } from './generate-fpp.service';
-import { getStartTsByTf, startOfMinuteTs } from '../../../utils/time';
+import { getStartTsByTf, startOfMinuteTs } from '../../utils/time';
 
 @Injectable()
 export class GenerateFppCronService {

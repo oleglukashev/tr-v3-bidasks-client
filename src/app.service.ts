@@ -93,27 +93,21 @@ export class AppService {
 
       // if cluster precision config exist
       if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
-        for (const tf in tradingServiceData.types.future.tickers[pairId]
+        for (const tfAsString in tradingServiceData.types.future.tickers[pairId]
           .clusterPrecision) {
+          const tf = parseInt(tfAsString);
           const clusterSize =
             tradingServiceData.types.future.tickers[pairId].clusterPrecision[
-              tf
+              tfAsString
             ];
 
           for (const trade of trades) {
-            const startTs = getStartTsByTf(trade.timestamp, parseInt(tf));
-
-            let priceCluster =
-              Math.ceil(parseFloat(trade.price) / clusterSize) * clusterSize;
-            priceCluster = Number(
-              priceCluster.toFixed(clusterSize.toString().split('.')[1].length),
-            );
-
+            const startTs = getStartTsByTf(trade.timestamp, tf);
+            const priceCluster = this.getPriceCluster(trade, clusterSize);
             // if no startTs in clusters clear this tf clusters and create new cluster
             // if (!this.clusters[pairId][tf]?.[startTs]) {
-            let cluster: any = await this.redis.get(
-              `clusters:${pairId}:${tf}:${startTs}`,
-            );
+            const clusterKey = `clusters:pairId_${pairId}:tf_${tf}:startTs_${startTs}`;
+            let cluster: any = await this.redis.get(clusterKey);
             if (!cluster) {
               // this.clusters[pairId][tf] = {};
 
@@ -129,12 +123,9 @@ export class AppService {
                   data: {},
                   ts: startTs,
                   pairId: parseInt(pairId),
-                  tf: parseInt(tf),
+                  tf: tf,
                 });
-                await this.redis.hmset(
-                  `clusters:${pairId}:${tf}:${startTs}`,
-                  cluster,
-                );
+                await this.redis.hmset(clusterKey, cluster);
               } catch (e) {
                 // this.clusters[pairId][tf][startTs] =
                 //   await this.clustersEntityService.findFirst({
@@ -148,43 +139,26 @@ export class AppService {
                   where: {
                     ts: { equals: startTs },
                     pairId: { equals: parseInt(pairId) },
-                    tf: { equals: parseInt(tf) },
+                    tf: { equals: tf },
                   },
                 });
-                await this.redis.hmset(
-                  `clusters:${pairId}:${tf}:${startTs}`,
-                  cluster,
-                );
+                await this.redis.hmset(clusterKey, cluster);
                 console.log(e);
               }
             }
 
             if (!cluster.data?.[priceCluster]) {
-              cluster.data[priceCluster] = {
-                p: priceCluster.toString(),
-                v: 0,
-                bv: 0,
-                sv: 0,
-              };
+              cluster.data[priceCluster] =
+                this.getDefaultClusterData(priceCluster);
             }
 
-            const priceClusterData = cluster.data[priceCluster];
+            const priceClusterData: any = this.updatePriceClusterData(
+              cluster.data[priceCluster],
+              trade,
+            );
+
             const tradeVolume = trade.amount;
             cluster.v += parseInt(tradeVolume);
-            priceClusterData.v = (
-              parseFloat(priceClusterData.v) + parseFloat(tradeVolume)
-            ).toString();
-
-            if (trade.side === 'buy') {
-              priceClusterData.bv = (
-                parseFloat(priceClusterData.bv) + parseFloat(tradeVolume)
-              ).toString();
-            } else if (trade.side === 'sell') {
-              priceClusterData.sv = (
-                parseFloat(priceClusterData.sv) + parseFloat(tradeVolume)
-              ).toString();
-            }
-
             cluster.data[priceCluster] = priceClusterData;
 
             try {
@@ -206,5 +180,40 @@ export class AppService {
         }
       }
     }
+  }
+
+  private getDefaultClusterData(priceCluster: any) {
+    return {
+      p: priceCluster.toString(),
+      v: 0,
+      bv: 0,
+      sv: 0,
+    };
+  }
+
+  private getPriceCluster(trade: any, clusterSize: number) {
+    const priceCluster: number =
+      Math.ceil(parseFloat(trade.price) / clusterSize) * clusterSize;
+    return Number(
+      priceCluster.toFixed(clusterSize.toString().split('.')[1].length),
+    );
+  }
+
+  private updatePriceClusterData(priceClusterData: any, trade: any) {
+    const tradeVolume = trade.amount;
+    const result: any = { ...priceClusterData };
+    result.v = (
+      parseFloat(priceClusterData.v) + parseFloat(tradeVolume)
+    ).toString();
+    if (trade.side === 'buy') {
+      result.bv = (
+        parseFloat(priceClusterData.bv) + parseFloat(tradeVolume)
+      ).toString();
+    } else if (trade.side === 'sell') {
+      result.sv = (
+        parseFloat(priceClusterData.sv) + parseFloat(tradeVolume)
+      ).toString();
+    }
+    return result;
   }
 }
