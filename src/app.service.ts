@@ -203,9 +203,8 @@ export class AppService {
   private getPriceCluster(trade: any, clusterSize: number) {
     const priceCluster: number =
       Math.ceil(parseFloat(trade.price) / clusterSize) * clusterSize;
-    return Number(
-      priceCluster.toFixed(clusterSize.toString().split('.')[1].length),
-    );
+    const signsAfterPoint = clusterSize.toString().split('.')?.[1]?.length || 0;
+    return Number(priceCluster.toFixed(signsAfterPoint));
   }
 
   private updatePriceClusterData(priceClusterData: any, trade: any) {
