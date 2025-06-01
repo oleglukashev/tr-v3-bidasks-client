@@ -69,11 +69,29 @@
           },
           "50": {
             "symbol": "BTCUSDT",
-            "tickerAnswerSymbol": "BTC/USDT:USDT"
+            "tickerAnswerSymbol": "BTC/USDT:USDT",
+            "clusterPrecision": {
+              "1": 10,
+              "5": 10,
+              "15": 10,
+              "30": 20,
+              "60": 20,
+              "240": 20,
+              "1440": 100
+            }
           },
           "51": {
             "symbol": "ETHUSDT",
-            "tickerAnswerSymbol": "ETH/USDT:USDT"
+            "tickerAnswerSymbol": "ETH/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.1,
+              "5": 0.1,
+              "15": 0.1,
+              "30": 0.2,
+              "60": 0.2,
+              "240": 0.2,
+              "1440": 1
+            }
           },
           "52": {
             "symbol": "LINKUSDT",
@@ -116,23 +134,68 @@
           },
           "55": {
             "symbol": "AVAXUSDT",
-            "tickerAnswerSymbol": "AVAX/USDT:USDT"
+            "tickerAnswerSymbol": "AVAX/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.005,
+              "5": 0.005,
+              "15": 0.005,
+              "30": 0.01,
+              "60": 0.01,
+              "240": 0.01,
+              "1440": 0.05
+            }
           },
           "56": {
             "symbol": "ADAUSDT",
-            "tickerAnswerSymbol": "ADA/USDT:USDT"
+            "tickerAnswerSymbol": "ADA/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.0001,
+              "5": 0.0001,
+              "15": 0.0001,
+              "30": 0.0002,
+              "60": 0.0002,
+              "240": 0.0002,
+              "1440": 0.001
+            }
           },
           "57": {
             "symbol": "TONUSDT",
-            "tickerAnswerSymbol": "TON/USDT:USDT"
+            "tickerAnswerSymbol": "TON/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.001,
+              "5": 0.001,
+              "15": 0.001,
+              "30": 0.002,
+              "60": 0.002,
+              "240": 0.002,
+              "1440": 0.01
+            }
           },
           "58": {
             "symbol": "XLMUSDT",
-            "tickerAnswerSymbol": "XLM/USDT:USDT"
+            "tickerAnswerSymbol": "XLM/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.00002,
+              "5": 0.00002,
+              "15": 0.00002,
+              "30": 0.0004,
+              "60": 0.0004,
+              "240": 0.0004,
+              "1440": 0.0002
+            }
           },
           "59": {
             "symbol": "DOTUSDT",
-            "tickerAnswerSymbol": "DOT/USDT:USDT"
+            "tickerAnswerSymbol": "DOT/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.001,
+              "5": 0.001,
+              "15": 0.001,
+              "30": 0.002,
+              "60": 0.002,
+              "240": 0.002,
+              "1440": 0.01
+            }
           }
         }
       }
