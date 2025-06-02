@@ -90,14 +90,6 @@ export class GenerateFppService {
     if (kline1Direction !== kline2Direction) {
       if (kline1Direction === 'up') {
         // down reverse
-        console.log(
-          'c1 poc > k1 close',
-          parseFloat(cluster1Poc.p) > parseFloat(kline1.close),
-        );
-        console.log(
-          'c2 poc > k2 close',
-          parseFloat(cluster2Poc.p) > parseFloat(kline2.close),
-        );
         if (
           parseFloat(cluster1Poc.p) > parseFloat(kline1.close) &&
           parseFloat(cluster2Poc.p) > parseFloat(kline2.close)
@@ -111,14 +103,6 @@ export class GenerateFppService {
         }
       } else {
         // up reverse
-        console.log(
-          'c1 poc < k1 close',
-          parseFloat(cluster1Poc.p) < parseFloat(kline1.close),
-        );
-        console.log(
-          'c2 poc < k2 close',
-          parseFloat(cluster2Poc.p) < parseFloat(kline2.close),
-        );
         if (
           parseFloat(cluster1Poc.p) < parseFloat(kline1.close) &&
           parseFloat(cluster2Poc.p) < parseFloat(kline2.close)
@@ -132,10 +116,6 @@ export class GenerateFppService {
         }
       }
     }
-    console.log('kline1', kline1);
-    console.log('kline2', kline2);
-    console.log('cluster1Poc', cluster1Poc);
-    console.log('cluster2Poc', cluster2Poc);
   }
 
   private getKlinePath(pairId: number, ts: number, tf: number) {
