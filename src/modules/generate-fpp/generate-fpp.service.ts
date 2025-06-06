@@ -61,27 +61,43 @@ export class GenerateFppService {
     const kline1 = await kline1Res.json();
     const kline2 = await kline2Res.json();
     // Interception pattern
-    await this.processInterceptionPattern(
-      cluster1,
-      cluster2,
-      kline1,
-      kline2,
-      pairId,
-      tf,
-    );
+    try {
+      await this.processInterceptionPattern(
+        cluster1,
+        cluster2,
+        kline1,
+        kline2,
+        pairId,
+        tf,
+      );
+    } catch (error) {
+      console.log(`Interception pattern error: ${error}`);
+    }
     // Reverse pattern
-    await this.processReversePattern(
-      cluster1,
-      cluster2,
-      kline1,
-      kline2,
-      pairId,
-      tf,
-    );
+    try {
+      await this.processReversePattern(
+        cluster1,
+        cluster2,
+        kline1,
+        kline2,
+        pairId,
+        tf,
+      );
+    } catch (error) {
+      console.log(`Reverse pattern error: ${error}`);
+    }
     // Locked volume
-    await this.processLockedVolumePattern(cluster2, kline2, pairId, tf);
+    try {
+      await this.processLockedVolumePattern(cluster2, kline2, pairId, tf);
+    } catch (error) {
+      console.log(`Locked volume pattern error: ${error}`);
+    }
     // Locked delta
-    await this.processLockedDeltaPattern(cluster2, kline2, pairId, tf);
+    try {
+      await this.processLockedDeltaPattern(cluster2, kline2, pairId, tf);
+    } catch (error) {
+      console.log(`Locked delta pattern error: ${error}`);
+    }
   }
 
   private async processInterceptionPattern(
