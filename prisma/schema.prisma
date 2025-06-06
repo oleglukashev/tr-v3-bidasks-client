@@ -62,7 +62,7 @@ model Fpp {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([ts, tf, pairId])
+  @@unique([ts, tf, pairId, type])
   @@index([pairId])
   @@map("fpp")
 }

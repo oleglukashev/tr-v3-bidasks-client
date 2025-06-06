@@ -40,6 +40,6 @@ Table fpp {
   updatedAt DateTime [not null]
 
   indexes {
-    (ts, tf, pairId) [unique]
+    (ts, tf, pairId, type) [unique]
   }
 }
