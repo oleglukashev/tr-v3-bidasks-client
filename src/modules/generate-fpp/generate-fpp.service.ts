@@ -281,12 +281,21 @@ export class GenerateFppService {
     if (klineDirection === 'down') {
       // down reverse
       const sortedData = sortedClusterData(cluster, false);
-      const firstClusterPriceDelta = parseFloat(delta(sortedData[0]));
-      const secondClusterPriceDelta = parseFloat(delta(sortedData[1]));
-      const thirdClusterPriceDelta = parseFloat(delta(sortedData[2]));
+      const firstClusterPriceDelta = sortedData[0]
+        ? parseFloat(delta(sortedData[0]))
+        : null;
+      const secondClusterPriceDelta = sortedData[1]
+        ? parseFloat(delta(sortedData[1]))
+        : null;
+      const thirdClusterPriceDelta = sortedData[2]
+        ? parseFloat(delta(sortedData[2]))
+        : null;
       if (
+        firstClusterPriceDelta &&
         firstClusterPriceDelta > 0 &&
+        secondClusterPriceDelta &&
         secondClusterPriceDelta > 0 &&
+        thirdClusterPriceDelta &&
         thirdClusterPriceDelta > 0 &&
         parseFloat(sortedData[2].p) > parseFloat(kline.open)
       ) {
@@ -301,13 +310,22 @@ export class GenerateFppService {
     } else {
       // up reverse
       const sortedData = sortedClusterData(cluster, true);
-      const firstClusterPriceDelta = parseFloat(delta(sortedData[0]));
-      const secondClusterPriceDelta = parseFloat(delta(sortedData[1]));
-      const thirdClusterPriceDelta = parseFloat(delta(sortedData[2]));
+      const firstClusterPriceDelta = sortedData[0]
+        ? parseFloat(delta(sortedData[0]))
+        : null;
+      const secondClusterPriceDelta = sortedData[1]
+        ? parseFloat(delta(sortedData[1]))
+        : null;
+      const thirdClusterPriceDelta = sortedData[2]
+        ? parseFloat(delta(sortedData[2]))
+        : null;
       if (
-        firstClusterPriceDelta < 0 &&
-        secondClusterPriceDelta < 0 &&
-        thirdClusterPriceDelta < 0 &&
+        firstClusterPriceDelta &&
+        firstClusterPriceDelta > 0 &&
+        secondClusterPriceDelta &&
+        secondClusterPriceDelta > 0 &&
+        thirdClusterPriceDelta &&
+        thirdClusterPriceDelta > 0 &&
         parseFloat(sortedData[2].p) < parseFloat(kline.open)
       ) {
         await this.fppEntityService.baseCreate({
