@@ -86,6 +86,12 @@ export class GenerateFppService {
     } catch (error) {
       console.log(`Reverse pattern error: ${error}`);
     }
+    // Test volume pattern
+    try {
+      await this.processTestVolumePattern(cluster1, kline1, kline2, pairId, tf);
+    } catch (error) {
+      console.log(`Test volume pattern error: ${error}`);
+    }
     // Locked volume
     try {
       await this.processLockedVolumePattern(cluster2, kline2, pairId, tf);
@@ -97,6 +103,13 @@ export class GenerateFppService {
       await this.processLockedDeltaPattern(cluster2, kline2, pairId, tf);
     } catch (error) {
       console.log(`Locked delta pattern error: ${error}`);
+    }
+
+    // Process low last price volume
+    try {
+      await this.processLowLastPriceVolumePattern(cluster2, kline2, pairId, tf);
+    } catch (error) {
+      console.log(`Process low last price volume pattern error: ${error}`);
     }
   }
 
@@ -305,6 +318,91 @@ export class GenerateFppService {
           type: 'locked_volume',
         });
       }
+    }
+  }
+
+  private async processLowLastPriceVolumePattern(
+    cluster: any,
+    kline: any,
+    pairId: number,
+    tf: number,
+  ) {
+    if (!kline) {
+      console.log(`${pairId},${tf}: Not enough kline data`);
+    }
+
+    const clusterPoc: any = pocFromCluster(cluster);
+
+    if (!clusterPoc) {
+      console.log(`${pairId},${tf}: Not enough poc data`);
+    }
+
+    const klineDirection = direction(kline);
+
+    let sortedData = null;
+    if (klineDirection === 'down') {
+      // down reverse
+      sortedData = sortedClusterData(cluster, false);
+    } else {
+      // up reverse
+      sortedData = sortedClusterData(cluster, true);
+    }
+
+    const firstClusterPrice: any = parseFloat(sortedData[0].v);
+
+    if (parseFloat(clusterPoc.v) > 100 * firstClusterPrice) {
+      await this.fppEntityService.baseCreate({
+        ts: kline.ts,
+        pairId,
+        tf,
+        direction: klineDirection,
+        type: 'low_last_price_volume',
+      });
+    }
+  }
+
+  private async processTestVolumePattern(
+    cluster1: any,
+    kline1: any,
+    kline2: any,
+    pairId: number,
+    tf: number,
+  ) {
+    if (!kline1 || !kline2) {
+      console.log(`${pairId},${tf}: Not enough klines data`);
+    }
+
+    const cluster1Poc: any = pocFromCluster(cluster1);
+
+    if (!cluster1Poc) {
+      console.log(`${pairId},${tf}: Not enough poc data`);
+    }
+
+    // down reverse
+    if (
+      parseFloat(cluster1Poc.p) > parseFloat(kline2.close) &&
+      parseFloat(cluster1Poc.p) > parseFloat(kline2.open) &&
+      parseFloat(cluster1Poc.p) < parseFloat(kline2.high)
+    ) {
+      await this.fppEntityService.baseCreate({
+        ts: kline2.ts,
+        pairId,
+        tf,
+        direction: 'down',
+        type: 'test_volume',
+      });
+    } else if (
+      parseFloat(cluster1Poc.p) < parseFloat(kline2.close) &&
+      parseFloat(cluster1Poc.p) < parseFloat(kline2.open) &&
+      parseFloat(cluster1Poc.p) > parseFloat(kline2.low)
+    ) {
+      await this.fppEntityService.baseCreate({
+        ts: kline2.ts,
+        pairId,
+        tf,
+        direction: 'up',
+        type: 'test_volume',
+      });
     }
   }
 
