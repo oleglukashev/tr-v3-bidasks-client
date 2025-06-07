@@ -104,7 +104,12 @@ export class GenerateFppService {
     } catch (error) {
       console.log(`Locked delta pattern error: ${error}`);
     }
-
+    // Locked imbalance
+    try {
+      await this.processLockedImbalancePattern(cluster2, kline2, pairId, tf);
+    } catch (error) {
+      console.log(`Locked inbalance pattern error: ${error}`);
+    }
     // Process low last price volume
     try {
       await this.processLowLastPriceVolumePattern(cluster2, kline2, pairId, tf);
@@ -334,6 +339,109 @@ export class GenerateFppService {
           tf,
           direction: 'up',
           type: 'locked_volume',
+        });
+      }
+    }
+  }
+
+  private async processLockedImbalancePattern(
+    cluster: any,
+    kline: any,
+    pairId: number,
+    tf: number,
+  ) {
+    if (!kline) {
+      console.log(`${pairId},${tf}: Not enough kline data`);
+    }
+
+    const clusterPoc: any = pocFromCluster(cluster);
+
+    if (!clusterPoc) {
+      console.log(`${pairId},${tf}: Not enough poc data`);
+    }
+
+    const klineDirection = direction(kline);
+
+    if (klineDirection === 'down') {
+      // down reverse
+      const sortedData = sortedClusterData(cluster, false);
+      const firstClusterPriceDelta = sortedData[0]
+        ? parseFloat(delta(sortedData[0]))
+        : null;
+      const firstClusterPriceBuy = sortedData[0]
+        ? parseFloat(sortedData[0].bv)
+        : null;
+      const secondClusterPriceDelta = sortedData[1]
+        ? parseFloat(delta(sortedData[1]))
+        : null;
+      const secondClusterPriceBuy = sortedData[1]
+        ? parseFloat(sortedData[1].bv)
+        : null;
+      const thirdClusterPriceDelta = sortedData[2]
+        ? parseFloat(delta(sortedData[2]))
+        : null;
+      const thirdClusterPriceBuy = sortedData[2]
+        ? parseFloat(sortedData[2].bv)
+        : null;
+      if (
+        firstClusterPriceDelta &&
+        firstClusterPriceDelta > 0 &&
+        firstClusterPriceBuy === 0 &&
+        secondClusterPriceDelta &&
+        secondClusterPriceDelta > 0 &&
+        secondClusterPriceBuy === 0 &&
+        thirdClusterPriceDelta &&
+        thirdClusterPriceDelta > 0 &&
+        thirdClusterPriceBuy === 0 &&
+        parseFloat(sortedData[2].p) > parseFloat(kline.open)
+      ) {
+        await this.fppEntityService.baseCreate({
+          ts: kline.ts,
+          pairId,
+          tf,
+          direction: 'down',
+          type: 'locked_imbalance',
+        });
+      }
+    } else {
+      // up reverse
+      const sortedData = sortedClusterData(cluster, true);
+      const firstClusterPriceDelta = sortedData[0]
+        ? parseFloat(delta(sortedData[0]))
+        : null;
+      const firstClusterPriceSell = sortedData[0]
+        ? parseFloat(sortedData[0].sv)
+        : null;
+      const secondClusterPriceDelta = sortedData[1]
+        ? parseFloat(delta(sortedData[1]))
+        : null;
+      const secondClusterPriceSell = sortedData[1]
+        ? parseFloat(sortedData[1].sv)
+        : null;
+      const thirdClusterPriceDelta = sortedData[2]
+        ? parseFloat(delta(sortedData[2]))
+        : null;
+      const thirdClusterPriceSell = sortedData[1]
+        ? parseFloat(sortedData[2].sv)
+        : null;
+      if (
+        firstClusterPriceDelta &&
+        firstClusterPriceDelta > 0 &&
+        firstClusterPriceSell === 0 &&
+        secondClusterPriceDelta &&
+        secondClusterPriceDelta > 0 &&
+        secondClusterPriceSell === 0 &&
+        thirdClusterPriceDelta &&
+        thirdClusterPriceDelta > 0 &&
+        thirdClusterPriceSell === 0 &&
+        parseFloat(sortedData[2].p) < parseFloat(kline.open)
+      ) {
+        await this.fppEntityService.baseCreate({
+          ts: kline.ts,
+          pairId,
+          tf,
+          direction: 'up',
+          type: 'locked_imbalance',
         });
       }
     }
