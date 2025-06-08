@@ -108,7 +108,7 @@ export class GenerateFppService {
     try {
       await this.processLockedImbalancePattern(cluster2, kline2, pairId, tf);
     } catch (error) {
-      console.log(`Locked inbalance pattern error: ${error}`);
+      console.log(`Locked imbalance pattern error: ${error}`);
     }
     // Process low last price volume
     try {
@@ -427,7 +427,7 @@ export class GenerateFppService {
       const thirdClusterPriceDelta = sortedData[2]
         ? parseFloat(delta(sortedData[2]))
         : null;
-      const thirdClusterPriceSell = sortedData[1]
+      const thirdClusterPriceSell = sortedData[2]
         ? parseFloat(sortedData[2].sv)
         : null;
       if (
