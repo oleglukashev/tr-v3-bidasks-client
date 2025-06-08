@@ -116,6 +116,12 @@ export class GenerateFppService {
     } catch (error) {
       console.log(`Process low last price volume pattern error: ${error}`);
     }
+    // Process resistance
+    try {
+      await this.processResistancePattern(kline1, kline2, pairId, tf);
+    } catch (error) {
+      console.log(`Process resistance pattern error: ${error}`);
+    }
   }
 
   private async processInterceptionPattern(
@@ -309,7 +315,7 @@ export class GenerateFppService {
           pairId,
           tf,
           direction: 'down',
-          type: 'locked_volume',
+          type: 'locked_delta',
         });
       }
     } else {
@@ -338,7 +344,7 @@ export class GenerateFppService {
           pairId,
           tf,
           direction: 'up',
-          type: 'locked_volume',
+          type: 'locked_delta',
         });
       }
     }
@@ -517,6 +523,7 @@ export class GenerateFppService {
         direction: 'down',
         type: 'test_volume',
       });
+      // up reverse
     } else if (
       parseFloat(cluster1Poc.p) < parseFloat(kline2.close) &&
       parseFloat(cluster1Poc.p) < parseFloat(kline2.open) &&
@@ -529,6 +536,46 @@ export class GenerateFppService {
         direction: 'up',
         type: 'test_volume',
       });
+    }
+  }
+
+  private async processResistancePattern(
+    kline1: any,
+    kline2: any,
+    pairId: number,
+    tf: number,
+  ) {
+    if (!kline1 || !kline2) {
+      console.log(`${pairId},${tf}: Not enough klines data`);
+    }
+
+    const kline1Direction = direction(kline1);
+    const kline2Direction = direction(kline2);
+
+    if (kline1Direction !== kline2Direction) {
+      if (kline1Direction === 'up') {
+        // down reverse
+        if (parseFloat(kline1.open) > parseFloat(kline2.close)) {
+          await this.fppEntityService.baseCreate({
+            ts: kline2.ts,
+            pairId,
+            tf,
+            direction: 'down',
+            type: 'resistance',
+          });
+        }
+      } else {
+        // up reverse
+        if (parseFloat(kline1.open) < parseFloat(kline2.close)) {
+          await this.fppEntityService.baseCreate({
+            ts: kline2.ts,
+            pairId,
+            tf,
+            direction: 'up',
+            type: 'resistance',
+          });
+        }
+      }
     }
   }
 
