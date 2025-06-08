@@ -5,6 +5,7 @@ import yargs from 'yargs';
 import config from '../../config/config.json';
 import { GenerateFppService } from './generate-fpp.service';
 import { getStartTsByTf, startOfMinuteTs } from '../../utils/time';
+import sleep from '../../utils/sleep';
 
 @Injectable()
 export class GenerateFppCronService {
@@ -16,6 +17,7 @@ export class GenerateFppCronService {
     const tradingServiceId: string = argv['tradingServiceId'];
     const tradingServiceData = config[tradingServiceId];
     const now = startOfMinuteTs();
+    await sleep(10000);
     console.log(moment().format('YYYY-MM-DD HH:mm:ss'));
     for (const pairId in tradingServiceData.types.future.tickers) {
       await this.generateFppService.processFpp(parseInt(pairId), 1);
