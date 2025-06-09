@@ -122,6 +122,12 @@ export class GenerateFppService {
     } catch (error) {
       console.log(`Process resistance pattern error: ${error}`);
     }
+    // Process weakness
+    try {
+      await this.processWeaknessPattern(cluster2, kline2, pairId, tf);
+    } catch (error) {
+      console.log(`Process weakness pattern error: ${error}`);
+    }
   }
 
   private async processInterceptionPattern(
@@ -490,6 +496,74 @@ export class GenerateFppService {
         direction: klineDirection,
         type: 'low_last_price_volume',
       });
+    }
+  }
+
+  private async processWeaknessPattern(
+    cluster: any,
+    kline: any,
+    pairId: number,
+    tf: number,
+  ) {
+    if (!kline) {
+      console.log(`${pairId},${tf}: Not enough kline data`);
+    }
+
+    const clusterPoc: any = pocFromCluster(cluster);
+
+    if (!clusterPoc) {
+      console.log(`${pairId},${tf}: Not enough poc data`);
+    }
+
+    const klineDirection = direction(kline);
+    const topWickSize =
+      parseFloat(kline.high) -
+      (klineDirection === 'up'
+        ? parseFloat(kline.close)
+        : parseFloat(kline.open));
+    const bottomWickSize =
+      (klineDirection === 'up'
+        ? parseFloat(kline.open)
+        : parseFloat(kline.close)) - parseFloat(kline.high);
+    const bodyWickSize =
+      klineDirection === 'up'
+        ? parseFloat(kline.close) - parseFloat(kline.open)
+        : parseFloat(kline.open) - parseFloat(kline.close);
+    const weaknessEnoughCondition =
+      topWickSize / bottomWickSize > 4 || bottomWickSize / topWickSize > 4;
+    const bodySizeEnoughCondition =
+      (topWickSize + bottomWickSize) / bodyWickSize > 6;
+
+    if (klineDirection === 'down') {
+      // down
+      if (
+        weaknessEnoughCondition &&
+        bodySizeEnoughCondition &&
+        parseFloat(clusterPoc.p) > parseFloat(kline.open)
+      ) {
+        await this.fppEntityService.baseCreate({
+          ts: kline.ts,
+          pairId,
+          tf,
+          direction: klineDirection,
+          type: 'weakness',
+        });
+      }
+    } else {
+      // up
+      if (
+        weaknessEnoughCondition &&
+        bodySizeEnoughCondition &&
+        parseFloat(clusterPoc.p) < parseFloat(kline.open)
+      ) {
+        await this.fppEntityService.baseCreate({
+          ts: kline.ts,
+          pairId,
+          tf,
+          direction: klineDirection,
+          type: 'weakness',
+        });
+      }
     }
   }
 
