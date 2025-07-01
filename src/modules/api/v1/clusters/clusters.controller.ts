@@ -47,7 +47,7 @@ export class ApiClustersController {
     const kline = await this.clustersEntityService.findFirst({
       where: {
         pairId: { equals: pairId },
-        interval: { equals: tf },
+        tf: { equals: tf },
         ts: { equals: ts },
       },
     });
