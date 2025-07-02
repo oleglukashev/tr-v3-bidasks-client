@@ -59,7 +59,7 @@ export class ApiClustersController {
       },
     });
 
-    if (!cluster) {
+    if (!Object.keys(cluster.data).length) {
       const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, ts);
       const redisItem: any = await getCluster(clusterKey, this.redis);
 
