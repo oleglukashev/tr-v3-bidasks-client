@@ -6,15 +6,22 @@ import {
   DefaultValuePipe,
   Get,
   HttpCode,
-  ParseIntPipe, NotFoundException,
+  ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { ClustersEntityService } from '../../../entity-services/clusters-entity-service';
+import { getCluster, getClusterKeyByPairIdTsTf } from '../../../../utils/redis';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 @ApiTags('Products')
 @ApiBearerAuth()
 @Controller({ path: 'api/v1/clusters' })
 export class ApiClustersController {
-  constructor(private readonly clustersEntityService: ClustersEntityService) {}
+  constructor(
+    private readonly clustersEntityService: ClustersEntityService,
+    @InjectRedis('bidasksDb') private readonly redis: Redis,
+  ) {}
 
   @Get('')
   @ApiOkResponse({ description: 'List of clusters' })
@@ -44,7 +51,7 @@ export class ApiClustersController {
     @Query('tf', new DefaultValuePipe(false), ParseIntPipe) tf,
     @Query('ts', new DefaultValuePipe(false), ParseIntPipe) ts,
   ): Promise<any> {
-    const kline = await this.clustersEntityService.findFirst({
+    let cluster = await this.clustersEntityService.findFirst({
       where: {
         pairId: { equals: pairId },
         tf: { equals: tf },
@@ -52,10 +59,17 @@ export class ApiClustersController {
       },
     });
 
-    if (!kline) {
-      throw new NotFoundException('Kline not found');
+    if (!cluster) {
+      const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, ts);
+      const redisItem: any = await getCluster(clusterKey, this.redis);
+
+      if (redisItem) {
+        cluster = redisItem;
+      } else {
+        throw new NotFoundException('Cluster not found');
+      }
     }
 
-    return kline;
+    return cluster;
   }
 }
