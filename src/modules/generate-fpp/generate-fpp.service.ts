@@ -524,7 +524,7 @@ export class GenerateFppService {
     const bottomWickSize =
       (klineDirection === 'up'
         ? parseFloat(kline.open)
-        : parseFloat(kline.close)) - parseFloat(kline.high);
+        : parseFloat(kline.close)) - parseFloat(kline.low);
     const bodyWickSize =
       klineDirection === 'up'
         ? parseFloat(kline.close) - parseFloat(kline.open)
