@@ -48,6 +48,10 @@
           "59": {
             "symbol": "DOT/USDT",
             "tickerAnswerSymbol": "DOT/USDT"
+          },
+          "60": {
+            "symbol": "TRX/USDT",
+            "tickerAnswerSymbol": "DOT/TRX"
           }
         }
       },
@@ -187,6 +191,19 @@
           "59": {
             "symbol": "DOTUSDT",
             "tickerAnswerSymbol": "DOT/USDT:USDT",
+            "clusterPrecision": {
+              "1": 0.001,
+              "5": 0.001,
+              "15": 0.001,
+              "30": 0.002,
+              "60": 0.002,
+              "240": 0.002,
+              "1440": 0.01
+            }
+          },
+          "60": {
+            "symbol": "TRXUSDT",
+            "tickerAnswerSymbol": "TRX/USDT:USDT",
             "clusterPrecision": {
               "1": 0.001,
               "5": 0.001,
