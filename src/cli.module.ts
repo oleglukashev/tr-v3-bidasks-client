@@ -3,9 +3,11 @@ import { EntityModule } from './modules/entity-services/entities.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { GrabTradesCommand } from './commands/grab-trades.command';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+
     RedisModule.forRoot(
       {
         type: 'single',

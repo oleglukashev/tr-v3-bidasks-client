@@ -23,17 +23,12 @@ export class ClustersEntityService extends BaseEntityService {
   }
 
   async processTrade(trade, tf, pairId, redis, clusterSize) {
-    console.log(111);
     const startTs = getStartTsByTf(trade.timestamp, tf);
-    console.log(112, typeof startTs);
     const priceCluster = this.getPriceCluster(trade, clusterSize);
-    console.log(113);
     // if no startTs in clusters clear this tf clusters and create new cluster
     // if (!this.clusters[pairId][tf]?.[startTs]) {
     const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, startTs);
-    console.log(114);
     let cluster: any = await getCluster(clusterKey, redis);
-    console.log(115);
     //let cluster: any = await this.redis.hgetall(clusterKey);
     if (!cluster?.id) {
       // this.clusters[pairId][tf] = {};
@@ -46,14 +41,12 @@ export class ClustersEntityService extends BaseEntityService {
         //     pairId: parseInt(pairId),
         //     tf: parseInt(tf),
         //   });
-        console.log(1);
         cluster = await this.baseCreate({
           data: {},
           ts: startTs,
           pairId: parseInt(pairId),
           tf: tf,
         });
-        console.log(2);
         await saveCluster(clusterKey, cluster, redis);
         //await this.redis.hmset(clusterKey, JSON.stringify(cluster));
       } catch (e) {
@@ -65,7 +58,6 @@ export class ClustersEntityService extends BaseEntityService {
         //       tf: { equals: parseInt(tf) },
         //     },
         //   });
-        console.log('startTs', startTs);
         cluster = await this.findFirst({
           where: {
             ts: { equals: startTs },

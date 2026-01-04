@@ -128,7 +128,7 @@ export class GrabTradesCommand extends CommandRunner {
     endDate,
   }: any) {
     for await (const trade of this.importFromGzUrl(
-      'https://public.bybit.com/trading/KASUSDT/KASUSDT2025-12-01.csv.gz',
+      'https://public.bybit.com/trading/KASUSDT/KASUSDT2025-01-01.csv.gz',
     )) {
       console.log(trade);
       // await saveToDb(row);
