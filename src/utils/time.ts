@@ -20,7 +20,7 @@ export function nowTs() {
   return moment().utc().valueOf();
 }
 
-export function startOfMinuteTs(ts: number | null) {
+export function startOfMinuteTs(ts?: number) {
   return moment(ts).utc().startOf('minute').valueOf();
 }
 
