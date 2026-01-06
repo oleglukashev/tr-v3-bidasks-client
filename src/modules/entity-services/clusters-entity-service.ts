@@ -7,10 +7,16 @@ import {
   getClusterKeyByPairIdTsTf,
   saveCluster,
 } from '../../utils/redis';
+import moment from 'moment';
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class ClustersEntityService extends BaseEntityService {
-  constructor(clustersPrismaService: PrismaService) {
+  constructor(
+    clustersPrismaService: PrismaService,
+    @InjectRedis('bidasksDb') private readonly redis: Redis,
+  ) {
     super(clustersPrismaService, 'cluster');
   }
 
@@ -24,6 +30,8 @@ export class ClustersEntityService extends BaseEntityService {
 
   async processTrade(trade, tf, pairId, redis, clusterSize) {
     const startTs = getStartTsByTf(trade.timestamp, tf);
+    // console.log('startTs', startTs);
+    // console.log('tf', tf);
     const priceCluster = this.getPriceCluster(trade, clusterSize);
     // if no startTs in clusters clear this tf clusters and create new cluster
     // if (!this.clusters[pairId][tf]?.[startTs]) {
@@ -99,6 +107,38 @@ export class ClustersEntityService extends BaseEntityService {
       // );
     } catch (e) {
       console.log(e);
+    }
+  }
+
+  async moveClusterFromRedisToBdByTf(tf: number, currentTs: number | null) {
+    const startTs = moment(currentTs)
+      .utc()
+      .startOf('minute')
+      .subtract(tf * 5, 'minute')
+      .valueOf();
+
+    const clusters = await this.findMany({
+      where: {
+        ts: { equals: startTs },
+        tf: { equals: tf },
+      },
+    });
+
+    for (const cluster of clusters) {
+      const clusterKey = getClusterKeyByPairIdTsTf(
+        cluster.pairId,
+        cluster.tf,
+        cluster.ts,
+      );
+      const redisItem: any = await getCluster(clusterKey, this.redis);
+
+      if (redisItem) {
+        await this.baseUpdate(cluster.id, {
+          ...redisItem,
+          id: undefined,
+        });
+        await this.redis.del(clusterKey);
+      }
     }
   }
 

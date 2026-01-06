@@ -62,7 +62,6 @@
             "symbol": "KASUSDT",
             "tickerAnswerSymbol": "KAS/USDT:USDT",
             "clusterPrecision": {
-              "1": 0.00001,
               "5": 0.00001,
               "15": 0.00001,
               "30": 0.00001,

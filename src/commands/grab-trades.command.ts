@@ -1,33 +1,20 @@
 import ccxt from 'ccxt';
 import * as yargs from 'yargs';
 import config from '../config/config.json';
-import { PrismaClient } from '@prisma/client';
 import moment from 'moment';
 
-import { Injectable } from '@nestjs/common';
 import * as zlib from 'zlib';
 import csv from 'csv-parser';
 import { pipeline } from 'stream/promises';
-import { request } from 'https';
 import { Readable } from 'stream';
 
 //const MIN_INTERVAL = 60000;
 
 import { CommandRunner, Command, Option } from 'nest-commander';
-import * as process from 'node:process';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { ClustersEntityService } from '../modules/entity-services/clusters-entity-service';
-
-const intervalByTf: any = {
-  '1m': 1,
-  '5m': 5,
-  '15m': 15,
-  '30m': 30,
-  '1h': 60,
-  '4h': 240,
-  '1d': 1440,
-};
+import { getStartTsByTf, startOfMinuteTs } from '../utils/time';
 
 // @Injectable()
 @Command({
@@ -70,16 +57,6 @@ export class GrabTradesCommand extends CommandRunner {
     }
 
     const pairIdBySymbol: any = {};
-    //for (const type in tradingServiceData.types) {
-    const exchange = new ccxtProClass({
-      enableRateLimit: true,
-      apiKey: process.env.API_KEY,
-      secret: process.env.API_SECRET,
-      options: {
-        defaultType: tradingServiceData.types.future.name, // Устанавливаем тип рынка на фьючерсный
-      },
-    });
-
     const symbols = [];
 
     for (const pairId in tradingServiceData.types.future.tickers) {
@@ -107,7 +84,6 @@ export class GrabTradesCommand extends CommandRunner {
       //   });
       // }
       await this.fetchAndSave({
-        exchange,
         pairId: parseInt(pairIdBySymbol[symbol]),
         symbol,
         tradingServiceData,
@@ -120,53 +96,55 @@ export class GrabTradesCommand extends CommandRunner {
   }
 
   async fetchAndSave({
-    exchange,
     pairId,
     symbol,
     tradingServiceData,
     startDate,
     endDate,
   }: any) {
-    for await (const trade of this.importFromGzUrl(
-      'https://public.bybit.com/trading/KASUSDT/KASUSDT2025-01-01.csv.gz',
-    )) {
-      console.log(trade);
-      // await saveToDb(row);
+    const dates = this.timePeriodsArray(startDate, endDate, 'day');
+    for (const date of dates) {
+      const url = `https://public.bybit.com/trading/${symbol}/${symbol}${date}.csv.gz`;
+      console.log('url: ', url);
+      for await (const trade of this.importFromGzUrl(url)) {
+        // await saveToDb(row);
 
-      // if cluster precision config exist
-      if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
-        for (const tfAsString in tradingServiceData.types.future.tickers[pairId]
-          .clusterPrecision) {
-          const tf = parseInt(tfAsString);
-          const clusterSize =
-            tradingServiceData.types.future.tickers[pairId].clusterPrecision[
-              tfAsString
-            ];
+        // if cluster precision config exist
+        if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
+          for (const tfAsString in tradingServiceData.types.future.tickers[
+            pairId
+          ].clusterPrecision) {
+            const tf = parseInt(tfAsString);
+            const clusterSize =
+              tradingServiceData.types.future.tickers[pairId].clusterPrecision[
+                tfAsString
+              ];
 
-          const data: any = {
-            timestamp: Number(parseInt(trade.timestamp) * 1000),
-            amount:
-              trade.side === 'Buy' ? Number(trade.size) : Number(-trade.size),
-            price: trade.price,
-            side:
-              trade.side === 'Buy'
-                ? 'buy'
-                : trade.side === 'Sell'
-                ? 'sell'
-                : 'sell',
-          };
+            const data: any = {
+              timestamp: Number(parseInt(trade.timestamp) * 1000),
+              amount:
+                trade.side === 'Buy' ? Number(trade.size) : Number(-trade.size),
+              price: trade.price,
+              side:
+                trade.side === 'Buy'
+                  ? 'buy'
+                  : trade.side === 'Sell'
+                  ? 'sell'
+                  : 'sell',
+            };
 
-          console.log(data);
-
-          await this.clustersEntityService.processTrade(
-            data,
-            tf,
-            pairId,
-            this.redis,
-            clusterSize,
-          );
+            await this.clustersEntityService.processTrade(
+              data,
+              tf,
+              pairId,
+              this.redis,
+              clusterSize,
+            );
+          }
         }
       }
+
+      await this.moveDataFromRedisToBd(date);
     }
   }
 
@@ -201,5 +179,78 @@ export class GrabTradesCommand extends CommandRunner {
     }
 
     await pipePromise;
+  }
+
+  private timePeriodsArray(
+    startDate: Date | string,
+    endDate: Date | string,
+    periodType: any = 'day',
+    periodSize = 1,
+    format = 'YYYY-MM-DD',
+  ): string[] {
+    const result: string[] = [];
+    const current = moment.utc(startDate);
+    const end = moment.utc(endDate);
+
+    while (current.isBefore(end, periodType)) {
+      result.push(current.format(format));
+      current.add(periodSize, periodType);
+    }
+
+    return result;
+  }
+
+  private async moveDataFromRedisToBd(date: string) {
+    const minutes = this.timePeriodsArray(
+      `${date} 00:00:00`,
+      `${date} 23:59:59`,
+      'minute',
+      1,
+      'YYYY-MM-DD HH:mm:ss',
+    );
+
+    for (const minute of minutes) {
+      const minuteUtc = moment(minute, 'YYYY-MM-DD HH:mm:ss').utc().valueOf();
+
+      // await this.clustersEntityService.moveClusterFromRedisToBdByTf(
+      //   1,
+      //   minuteUtc,
+      // );
+
+      if (minuteUtc === getStartTsByTf(minuteUtc, 5)) {
+        await this.clustersEntityService.moveClusterFromRedisToBdByTf(
+          5,
+          minuteUtc,
+        );
+      }
+
+      if (minuteUtc === getStartTsByTf(minuteUtc, 15)) {
+        await this.clustersEntityService.moveClusterFromRedisToBdByTf(
+          15,
+          minuteUtc,
+        );
+      }
+
+      if (minuteUtc === getStartTsByTf(minuteUtc, 30)) {
+        await this.clustersEntityService.moveClusterFromRedisToBdByTf(
+          30,
+          minuteUtc,
+        );
+      }
+
+      if (minuteUtc === getStartTsByTf(minuteUtc, 60)) {
+        await this.clustersEntityService.moveClusterFromRedisToBdByTf(
+          60,
+          minuteUtc,
+        );
+      }
+
+      if (minuteUtc === getStartTsByTf(minuteUtc, 240)) {
+        await this.clustersEntityService.moveClusterFromRedisToBdByTf(
+          240,
+          minuteUtc,
+        );
+      }
+    }
   }
 }
