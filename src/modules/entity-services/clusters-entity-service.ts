@@ -110,7 +110,7 @@ export class ClustersEntityService extends BaseEntityService {
     }
   }
 
-  async moveClusterFromRedisToBdByTf(tf: number, currentTs: number | null) {
+  async moveClusterFromRedisToBdByTf(tf: number, currentTs?: number) {
     const startTs = moment(currentTs)
       .utc()
       .startOf('minute')
