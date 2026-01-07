@@ -49,6 +49,7 @@ export class ClustersEntityService extends BaseEntityService {
         //     pairId: parseInt(pairId),
         //     tf: parseInt(tf),
         //   });
+
         cluster = await this.baseCreate({
           data: {},
           ts: startTs,
@@ -142,14 +143,14 @@ export class ClustersEntityService extends BaseEntityService {
     }
   }
 
-  private getPriceCluster(trade: any, clusterSize: number) {
+  getPriceCluster(trade: any, clusterSize: number) {
     const priceCluster: number =
       Math.ceil(parseFloat(trade.price) / clusterSize) * clusterSize;
     const signsAfterPoint = clusterSize.toString().split('.')?.[1]?.length || 0;
     return Number(priceCluster.toFixed(signsAfterPoint));
   }
 
-  private getDefaultClusterData(priceCluster: any) {
+  getDefaultClusterData(priceCluster: any) {
     return {
       p: priceCluster.toString(),
       v: 0,
@@ -158,7 +159,7 @@ export class ClustersEntityService extends BaseEntityService {
     };
   }
 
-  private updatePriceClusterData(priceClusterData: any, trade: any) {
+  updatePriceClusterData(priceClusterData: any, trade: any) {
     const tradeVolume = trade.amount;
     const result: any = { ...priceClusterData };
     result.v = Number(
