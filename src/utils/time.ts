@@ -7,13 +7,9 @@ export function getStartTsByTf(ts: number, tf: number) {
   if (!ts) {
     return null;
   }
-  const time = moment(ts);
-  return moment(time)
-    .minutes(Math.floor(time.minutes() / tf) * tf)
-    .seconds(0)
-    .milliseconds(0)
-    .utc()
-    .valueOf();
+  const time = moment(ts).utc().valueOf();
+  const res = Math.floor(time / (tf * msInMinute));
+  return res * tf * msInMinute;
 }
 
 export function nowTs() {
