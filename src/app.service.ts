@@ -69,55 +69,52 @@ export class AppService {
     const tradingServiceId: string = argv['tradingServiceId'];
     const tradingServiceData = config[tradingServiceId];
     const pairId = pairIdBySymbol[symbol];
-    //if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
-    // const clusterByPairId = await this.redis.hgetall(`clusters:${pairId}`);
-    // if (!clusterByPairId) {
-    //   await this.redis.hmset(`clusters:${pairId}`, {});
-    //   //this.clusters[pairId] = {};
-    // }
-    // if (!this.clusters[pairId]) {
-    //   this.clusters[pairId] = {};
-    // }
-    // for (const tf in tradingServiceData.types.future.tickers[pairId]
-    //   .clusterPrecision) {
-    //   this.clusters[pairId][tf] = {};
-    // }
-    //}
+    if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
+      // const clusterByPairId = await this.redis.hgetall(`clusters:${pairId}`);
+      // if (!clusterByPairId) {
+      //   await this.redis.hmset(`clusters:${pairId}`, {});
+      //   //this.clusters[pairId] = {};
+      // }
+      // if (!this.clusters[pairId]) {
+      //   this.clusters[pairId] = {};
+      // }
+      // for (const tf in tradingServiceData.types.future.tickers[pairId]
+      //   .clusterPrecision) {
+      //   this.clusters[pairId][tf] = {};
+      // }
+    }
 
     while (true) {
       let trades: any[] = [];
       try {
         // Получаем данные по тикеру через WebSocket
         trades = await exchange.watchTrades(symbol);
-        this.bidasksProcess(tradingServiceData, pairId, trades);
       } catch (error: any) {
         console.error('WebSocket connection error:', error.message);
         console.log('Reconnecting in 2 seconds...');
         await sentToBot(`bidasks microservice: ${symbol} - ${error.message}`);
         await new Promise((resolve) => setTimeout(resolve, 2000)); // Задержка перед переподключением
       }
-    }
-  }
 
-  private async bidasksProcess(tradingServiceData, pairId, trades) {
-    // if cluster precision config exist
-    if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
-      for (const tfAsString in tradingServiceData.types.future.tickers[pairId]
-        .clusterPrecision) {
-        const tf = parseInt(tfAsString);
-        const clusterSize =
-          tradingServiceData.types.future.tickers[pairId].clusterPrecision[
-            tfAsString
-          ];
+      // if cluster precision config exist
+      if (tradingServiceData.types.future.tickers[pairId].clusterPrecision) {
+        for (const tfAsString in tradingServiceData.types.future.tickers[pairId]
+          .clusterPrecision) {
+          const tf = parseInt(tfAsString);
+          const clusterSize =
+            tradingServiceData.types.future.tickers[pairId].clusterPrecision[
+              tfAsString
+            ];
 
-        for (const trade of trades) {
-          await this.clustersEntityService.processTrade(
-            trade,
-            tf,
-            pairId,
-            this.redis,
-            clusterSize,
-          );
+          for (const trade of trades) {
+            await this.clustersEntityService.processTrade(
+              trade,
+              tf,
+              pairId,
+              this.redis,
+              clusterSize,
+            );
+          }
         }
       }
     }
