@@ -5,14 +5,14 @@ import {
   Logger,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '.db/bidasks/generated';
 
 @Injectable()
-export class PrismaService
+export class BidasksPrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger(PrismaService.name);
+  private readonly logger = new Logger(BidasksPrismaService.name);
 
   constructor() {
     super({ log: [{ emit: 'event', level: 'query' }] });
@@ -28,7 +28,6 @@ export class PrismaService
     this.$use(async (params, next) => {
       const before = Date.now();
       const result = await next(params);
-
       const after = Date.now();
       // console.log(
       //   `Query ${params.model}.${params.action} took ${after - before}ms`,

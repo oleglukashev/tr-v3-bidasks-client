@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from './modules/prisma/prisma.module';
 import { EntityModule } from './modules/entity-services/entities.module';
 import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
@@ -9,9 +8,15 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ApiFppModule } from './modules/api/v1/fpp/fpp.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { MoveClustersFromRedisToBdModule } from './modules/move-clusters-from-redis-to-bd/move-clusters-from-redis-to-bd.module';
+import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.module';
+//import { KlinesPrismaModule } from './modules/klinesPrisma/klinesPrisma.module';
+import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
 
 @Module({
   imports: [
+    GeneralPrismaModule,
+    //KlinesPrismaModule,
+    BidasksPrismaModule,
     ConfigModule.forRoot(),
     ScheduleModule.forRoot(),
     RedisModule.forRoot(
@@ -23,7 +28,6 @@ import { MoveClustersFromRedisToBdModule } from './modules/move-clusters-from-re
       'bidasksDb',
     ),
     EntityModule,
-    PrismaModule,
     GenerateFppModule,
     MoveClustersFromRedisToBdModule,
     ApiClustersModule,

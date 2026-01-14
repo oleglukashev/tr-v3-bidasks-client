@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { BaseEntityService } from './base.service';
+import { Base } from './base.service';
 import { getStartTsByTf } from '../../utils/time';
 import {
   getCluster,
@@ -10,11 +9,12 @@ import {
 import moment from 'moment';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
+import { BidasksPrismaService } from '../bidasksPrisma/bidasksPrisma.service';
 
 @Injectable()
-export class ClustersEntityService extends BaseEntityService {
+export class ClustersEntityService extends Base {
   constructor(
-    clustersPrismaService: PrismaService,
+    clustersPrismaService: BidasksPrismaService,
     @InjectRedis('bidasksDb') private readonly redis: Redis,
   ) {
     super(clustersPrismaService, 'cluster');

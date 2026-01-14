@@ -6,7 +6,9 @@ import {
   Enumerable,
   PostInclude,
 } from 'prisma';
-import { PrismaService } from '../prisma/prisma.service';
+import { GeneralPrismaService } from '../generalPrisma/generalPrisma.service';
+import { KlinesPrismaService } from '../klinesPrisma/klinesPrisma.service';
+import { BidasksPrismaService } from '../bidasksPrisma/bidasksPrisma.service';
 
 interface IFind {
   where?: UserWhereInput;
@@ -17,9 +19,12 @@ interface IFind {
   include?: XOR<PostInclude, null>;
 }
 
-export class BaseEntityService {
+export class Base {
   constructor(
-    prismaService: PrismaService,
+    prismaService:
+      | GeneralPrismaService
+      | KlinesPrismaService
+      | BidasksPrismaService,
     protected readonly prismaDomain: string,
   ) {
     this.prismaService = prismaService;
@@ -48,8 +53,8 @@ export class BaseEntityService {
         include,
       },
       {
-        skip: page ? page * BaseEntityService.DEFAULT_PAGE_SIZE : 0,
-        take: take || BaseEntityService.DEFAULT_PAGE_SIZE,
+        skip: page ? page * Base.DEFAULT_PAGE_SIZE : 0,
+        take: take || Base.DEFAULT_PAGE_SIZE,
       },
     );
     return (await this._prismaDomain().findMany(params)) || [];
@@ -177,9 +182,7 @@ export class BaseEntityService {
   }
 
   async pages(where): Promise<number> {
-    return Math.ceil(
-      (await this.countBy(where)) / BaseEntityService.DEFAULT_PAGE_SIZE,
-    );
+    return Math.ceil((await this.countBy(where)) / Base.DEFAULT_PAGE_SIZE);
   }
 
   countBy(where): Promise<number> {
@@ -217,7 +220,7 @@ export class BaseEntityService {
             include,
             orderBy,
             select,
-            take: take || BaseEntityService.DEFAULT_PAGE_SIZE,
+            take: take || Base.DEFAULT_PAGE_SIZE,
           }),
     };
 
