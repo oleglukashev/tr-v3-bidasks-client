@@ -37,48 +37,59 @@ export class ClustersEntityService extends Base {
     // if (!this.clusters[pairId][tf]?.[startTs]) {
     const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, startTs);
     let cluster: any = await getCluster(clusterKey, redis);
-    //let cluster: any = await this.redis.hgetall(clusterKey);
-    if (!cluster?.id) {
-      // this.clusters[pairId][tf] = {};
 
-      try {
-        // this.clusters[pairId][tf][startTs] =
-        //   await this.clustersEntityService.baseCreate({
-        //     data: {},
-        //     ts: startTs,
-        //     pairId: parseInt(pairId),
-        //     tf: parseInt(tf),
-        //   });
-
-        cluster = await this.baseCreate({
-          data: {},
-          ts: startTs,
-          pairId: parseInt(pairId),
-          tf: tf,
-        });
-        await saveCluster(clusterKey, cluster, redis);
-        //await this.redis.hmset(clusterKey, JSON.stringify(cluster));
-      } catch (e) {
-        // this.clusters[pairId][tf][startTs] =
-        //   await this.clustersEntityService.findFirst({
-        //     where: {
-        //       ts: { equals: startTs },
-        //       pairId: { equals: parseInt(pairId) },
-        //       tf: { equals: parseInt(tf) },
-        //     },
-        //   });
-        cluster = await this.findFirst({
-          where: {
-            ts: { equals: startTs },
-            pairId: { equals: parseInt(pairId) },
-            tf: { equals: tf },
-          },
-        });
-        await saveCluster(clusterKey, cluster, redis);
-        //await this.redis.hmset(clusterKey, cluster);
-        console.log(e);
-      }
+    if (!cluster) {
+      cluster = {
+        data: {},
+        ts: startTs,
+        pairId: parseInt(pairId),
+        tf: parseInt(tf),
+      };
     }
+    //let cluster: any = await this.redis.hgetall(clusterKey);
+
+    //await saveCluster(clusterKey, cluster, redis);
+    // if (!cluster?.id) {
+    //   // this.clusters[pairId][tf] = {};
+    //
+    //   try {
+    //     // this.clusters[pairId][tf][startTs] =
+    //     //   await this.clustersEntityService.baseCreate({
+    //     //     data: {},
+    //     //     ts: startTs,
+    //     //     pairId: parseInt(pairId),
+    //     //     tf: parseInt(tf),
+    //     //   });
+    //
+    //     // cluster = await this.baseCreate({
+    //     //   data: {},
+    //     //   ts: startTs,
+    //     //   pairId: parseInt(pairId),
+    //     //   tf: tf,
+    //     // });
+    //     await saveCluster(clusterKey, cluster, redis);
+    //     //await this.redis.hmset(clusterKey, JSON.stringify(cluster));
+    //   } catch (e) {
+    //     // this.clusters[pairId][tf][startTs] =
+    //     //   await this.clustersEntityService.findFirst({
+    //     //     where: {
+    //     //       ts: { equals: startTs },
+    //     //       pairId: { equals: parseInt(pairId) },
+    //     //       tf: { equals: parseInt(tf) },
+    //     //     },
+    //     //   });
+    //     cluster = await this.findFirst({
+    //       where: {
+    //         ts: { equals: startTs },
+    //         pairId: { equals: parseInt(pairId) },
+    //         tf: { equals: tf },
+    //       },
+    //     });
+    //     await saveCluster(clusterKey, cluster, redis);
+    //     //await this.redis.hmset(clusterKey, cluster);
+    //     console.log(e);
+    //   }
+    // }
 
     if (!cluster.data?.[priceCluster]) {
       cluster.data[priceCluster] = this.getDefaultClusterData(priceCluster);
@@ -101,7 +112,7 @@ export class ClustersEntityService extends Base {
       //     data: this.clusters[pairId][tf][startTs].data,
       //   },
       // );
-      await saveCluster(clusterKey, cluster, redis);
+      //await saveCluster(clusterKey, cluster, redis);
       // await this.redis.hmset(
       //   `clusters:${pairId}:${tf}:${startTs}`,
       //   JSON.stringify(cluster),
