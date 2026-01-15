@@ -11,11 +11,11 @@ import { MoveClustersFromRedisToBdModule } from './modules/move-clusters-from-re
 import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.module';
 //import { KlinesPrismaModule } from './modules/klinesPrisma/klinesPrisma.module';
 import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
-import { BullModule } from '@nestjs/bull';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { BidasksConsumer } from './bidasks.consumer';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -34,7 +34,7 @@ import { BidasksConsumer } from './bidasks.consumer';
     ),
     BullModule.forRoot({
       prefix: 'tr_v3_bidasks',
-      redis: {
+      connection: {
         host: 'localhost',
         port: 6379,
         db: 5,

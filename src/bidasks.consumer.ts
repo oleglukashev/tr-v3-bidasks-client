@@ -1,18 +1,21 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Job } from 'bull';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { ClustersEntityService } from './modules/entity-services/clusters-entity-service';
 
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
+
 @Processor('bidasks')
-export class BidasksConsumer {
+export class BidasksConsumer extends WorkerHost {
   constructor(
     @InjectRedis('bidasksDb') private readonly redis: Redis,
     private readonly clustersEntityService: ClustersEntityService,
-  ) {}
+  ) {
+    super();
+  }
 
-  @Process({ concurrency: 10 })
-  async handle(job: Job<any>) {
+  //@Process({ concurrency: 10 })
+  async process(job: Job<any>) {
     const trade = job.data.trade;
     const tf = job.data.tf;
     const pairId = job.data.pairId;

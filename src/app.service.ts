@@ -6,7 +6,7 @@ import ccxt from 'ccxt';
 import * as process from 'node:process';
 import sentToBot from './utils/bot';
 import { PairsEntityService } from './modules/entity-services/pairs-entity-service';
-import { Queue } from 'bull';
+import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 
 @Injectable()
