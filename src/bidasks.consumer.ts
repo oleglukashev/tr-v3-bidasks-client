@@ -11,8 +11,8 @@ export class BidasksConsumer {
     private readonly clustersEntityService: ClustersEntityService,
   ) {}
 
-  @Process('processTrade')
-  async processTrade(job: Job<any>) {
+  @Process({ concurrency: 10 })
+  async handle(job: Job<any>) {
     const trade = job.data.trade;
     const tf = job.data.tf;
     const pairId = job.data.pairId;
