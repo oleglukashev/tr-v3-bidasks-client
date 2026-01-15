@@ -87,7 +87,7 @@ export class AppService {
                 pairId,
                 clusterSize,
               },
-              { removeOnComplete: true },
+              { removeOnComplete: true, removeOnFail: true },
             );
           }
         }
