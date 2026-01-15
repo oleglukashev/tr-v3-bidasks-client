@@ -34,7 +34,7 @@ import { BidasksConsumer } from './bidasks.consumer';
     ),
     BullModule.forRoot({
       prefix: 'tr_v3_bidasks',
-      connection: {
+      redis: {
         host: 'localhost',
         port: 6379,
         db: 5,
