@@ -13,7 +13,7 @@ import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.modul
 import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
-import { BullAdapter } from '@bull-board/api/bullAdapter';
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BidasksConsumer } from './bidasks.consumer';
 import { BullModule } from '@nestjs/bullmq';
 
@@ -47,7 +47,7 @@ import { BullModule } from '@nestjs/bullmq';
     }),
     BullBoardModule.forFeature({
       name: 'bidasks',
-      adapter: BullAdapter,
+      adapter: BullMQAdapter,
     }),
     EntityModule,
     GenerateFppModule,
