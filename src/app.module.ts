@@ -14,6 +14,7 @@ import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.modul
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
+import { BullAdapter } from '@bull-board/api/bullAdapter';
 
 @Module({
   imports: [
@@ -42,6 +43,10 @@ import { ExpressAdapter } from '@bull-board/express';
     BullBoardModule.forRoot({
       route: '/queues',
       adapter: ExpressAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: 'bidasks',
+      adapter: BullAdapter,
     }),
     EntityModule,
     GenerateFppModule,
