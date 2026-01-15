@@ -112,7 +112,7 @@ export class ClustersEntityService extends Base {
       //     data: this.clusters[pairId][tf][startTs].data,
       //   },
       // );
-      //await saveCluster(clusterKey, cluster, redis);
+      await saveCluster(clusterKey, cluster, redis);
       // await this.redis.hmset(
       //   `clusters:${pairId}:${tf}:${startTs}`,
       //   JSON.stringify(cluster),
