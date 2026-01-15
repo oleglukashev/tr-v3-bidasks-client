@@ -79,12 +79,16 @@ export class AppService {
           const clusterSize = pair.clusterPrecision[tfAsString];
 
           for (const trade of trades) {
-            await this.bidasksQueue.add('tradeProcess', {
-              trade,
-              tf,
-              pairId,
-              clusterSize,
-            });
+            await this.bidasksQueue.add(
+              'tradeProcess',
+              {
+                trade,
+                tf,
+                pairId,
+                clusterSize,
+              },
+              { removeOnComplete: true },
+            );
           }
         }
       }
