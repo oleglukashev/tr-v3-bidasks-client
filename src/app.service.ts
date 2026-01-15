@@ -63,7 +63,6 @@ export class AppService {
       try {
         // Получаем данные по тикеру через WebSocket
         trades = await exchange.watchTrades(pair.symbol);
-
       } catch (error: any) {
         console.error('WebSocket connection error:', error.message);
         console.log('Reconnecting in 2 seconds...');
@@ -80,7 +79,7 @@ export class AppService {
           const clusterSize = pair.clusterPrecision[tfAsString];
 
           for (const trade of trades) {
-            await this.bidasksQueue.add({
+            await this.bidasksQueue.add('tradeProcess', {
               trade,
               tf,
               pairId,

@@ -14,7 +14,6 @@ export class BidasksConsumer extends WorkerHost {
     super();
   }
 
-  //@Process({ concurrency: 10 })
   async process(job: Job<any>) {
     const trade = job.data.trade;
     const tf = job.data.tf;
