@@ -8,11 +8,13 @@ import sentToBot from './utils/bot';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { PairsEntityService } from './modules/entity-services/pairs-entity-service';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 
 @Injectable()
 export class AppService {
   constructor(
-    @InjectRedis('bidasksDb') private readonly redis: Redis,
+    @InjectQueue('bidasks') private bidasksQueue: Queue,
     private readonly clustersEntityService: ClustersEntityService,
     private readonly pairsEntityService: PairsEntityService,
   ) {}
@@ -63,6 +65,7 @@ export class AppService {
       try {
         // Получаем данные по тикеру через WebSocket
         trades = await exchange.watchTrades(pair.symbol);
+
       } catch (error: any) {
         console.error('WebSocket connection error:', error.message);
         console.log('Reconnecting in 2 seconds...');
@@ -79,13 +82,12 @@ export class AppService {
           const clusterSize = pair.clusterPrecision[tfAsString];
 
           for (const trade of trades) {
-            await this.clustersEntityService.processTrade(
+            await this.bidasksQueue.add('processTrade', {
               trade,
               tf,
               pairId,
-              this.redis,
               clusterSize,
-            );
+            });
           }
         }
       }

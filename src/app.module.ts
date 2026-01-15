@@ -11,6 +11,9 @@ import { MoveClustersFromRedisToBdModule } from './modules/move-clusters-from-re
 import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.module';
 //import { KlinesPrismaModule } from './modules/klinesPrisma/klinesPrisma.module';
 import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
+import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
 
 @Module({
   imports: [
@@ -27,6 +30,19 @@ import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.modul
       },
       'bidasksDb',
     ),
+    BullModule.forRoot({
+      prefix: 'tr_v3_bidasks',
+      connection: {
+        host: 'localhost',
+        port: 6379,
+        db: 5,
+      },
+    }),
+    BullModule.registerQueue({ name: 'bidasks' }),
+    BullBoardModule.forRoot({
+      route: '/queues',
+      adapter: ExpressAdapter,
+    }),
     EntityModule,
     GenerateFppModule,
     MoveClustersFromRedisToBdModule,
