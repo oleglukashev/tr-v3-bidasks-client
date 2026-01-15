@@ -15,6 +15,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
+import { BidasksConsumer } from './bidasks.consumer';
 
 @Module({
   imports: [
@@ -54,6 +55,6 @@ import { BullAdapter } from '@bull-board/api/bullAdapter';
     ApiClustersModule,
     ApiFppModule,
   ],
-  providers: [AppService],
+  providers: [AppService, BidasksConsumer],
 })
 export class AppModule {}
