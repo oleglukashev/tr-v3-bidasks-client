@@ -5,7 +5,7 @@ import { ClustersEntityService } from './modules/entity-services/clusters-entity
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 
-@Processor('bidasks', { concurrency: 100 })
+@Processor('bidasks', { concurrency: 150 })
 export class BidasksConsumer extends WorkerHost {
   constructor(
     @InjectRedis('bidasksDb') private readonly redis: Redis,
