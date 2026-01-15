@@ -12,7 +12,7 @@ export class BidasksConsumer {
   ) {}
 
   @Process('processTrade')
-  async add(job: Job<any>) {
+  async processTrade(job: Job<any>) {
     const trade = job.data.trade;
     const tf = job.data.tf;
     const pairId = job.data.pairId;
