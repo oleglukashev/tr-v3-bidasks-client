@@ -13,10 +13,12 @@ import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.modul
 import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BidasksConsumer } from './bidasks.consumer';
 import { BullModule } from '@nestjs/bullmq';
+import basicAuth from 'express-basic-auth';
 
+// @ts-ignore
 @Module({
   imports: [
     GeneralPrismaModule,
@@ -48,6 +50,12 @@ import { BullModule } from '@nestjs/bullmq';
     BullBoardModule.forFeature({
       name: 'bidasks',
       adapter: BullMQAdapter,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      middleware: basicAuth({
+        challenge: true,
+        users: { admin: 'PhDVJc9ct9Zrg8oX0Q3ZzHnD76ho7WF3j5X0JLTH' },
+      }),
     }),
     EntityModule,
     GenerateFppModule,
