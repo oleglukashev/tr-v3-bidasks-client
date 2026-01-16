@@ -50,12 +50,6 @@ import basicAuth from 'express-basic-auth';
     BullBoardModule.forFeature({
       name: 'bidasks',
       adapter: BullMQAdapter,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
-      middleware: basicAuth({
-        challenge: true,
-        users: { admin: 'PhDVJc9ct9Zrg8oX0Q3ZzHnD76ho7WF3j5X0JLTH' },
-      }),
     }),
     EntityModule,
     GenerateFppModule,
