@@ -69,7 +69,7 @@ export class AppService {
         await sentToBot(
           `bidasks microservice: ${pair.symbol} - ${error.message}`,
         );
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // Задержка перед переподключением
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Задержка перед переподключением
       }
 
       // if cluster precision config exist
