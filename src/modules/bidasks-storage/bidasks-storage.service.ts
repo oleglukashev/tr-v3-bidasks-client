@@ -66,6 +66,26 @@ export class BidasksStorageService {
     }
 
     if (!cluster.data?.[priceCluster]) {
+      let minPrice = 0;
+      let maxPrice = 0;
+
+      for (const price in cluster.data) {
+        if (parseFloat(price) < minPrice) {
+          minPrice = parseFloat(price);
+        }
+        if (parseFloat(price) > maxPrice) {
+          maxPrice = parseFloat(price);
+        }
+      }
+
+      let currPrice = minPrice;
+      while (currPrice <= maxPrice) {
+        if (!cluster.data?.[currPrice]) {
+          cluster.data[currPrice] = getDefaultClusterData(priceCluster);
+        }
+        currPrice += clusterSize;
+      }
+
       cluster.data[priceCluster] = getDefaultClusterData(priceCluster);
     }
 
