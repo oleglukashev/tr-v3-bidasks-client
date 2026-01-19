@@ -6,16 +6,11 @@ import ccxt from 'ccxt';
 import * as process from 'node:process';
 import sentToBot from './utils/bot';
 import { PairsEntityService } from './modules/entity-services/pairs-entity-service';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
 import { BidasksStorageService } from './modules/bidasks-storage/bidasks-storage.service';
-import { getStartTsByTf } from './utils/time';
 
 @Injectable()
 export class AppService {
   constructor(
-    @InjectQueue('bidasks') private bidasksQueue: Queue,
-    private readonly clustersEntityService: ClustersEntityService,
     private readonly pairsEntityService: PairsEntityService,
     private readonly bidasksStorageService: BidasksStorageService,
   ) {}
@@ -82,17 +77,12 @@ export class AppService {
           const clusterSize = pair.clusterPrecision[tfAsString];
 
           for (const trade of trades) {
-            this.bidasksStorageService.add(trade);
-            // await this.bidasksQueue.add(
-            //   'tradeProcess',
-            //   {
-            //     trade,
-            //     tf,
-            //     pairId,
-            //     clusterSize,
-            //   },
-            //   { removeOnComplete: true, removeOnFail: true },
-            // );
+            this.bidasksStorageService.processTrade(
+              trade,
+              tf,
+              pairId,
+              clusterSize,
+            );
           }
         }
       }

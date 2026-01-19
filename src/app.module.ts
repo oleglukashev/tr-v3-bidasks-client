@@ -9,14 +9,11 @@ import { ApiFppModule } from './modules/api/v1/fpp/fpp.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { MoveClustersFromStorageToBdModule } from './modules/move-clusters-from-storage-to-bd/move-clusters-from-storage-to-bd.module';
 import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.module';
-//import { KlinesPrismaModule } from './modules/klinesPrisma/klinesPrisma.module';
 import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-import { BidasksConsumer } from './bidasks.consumer';
 import { BullModule } from '@nestjs/bullmq';
-import basicAuth from 'express-basic-auth';
 import { BidasksStorageModule } from './modules/bidasks-storage/bidasks-storage.module';
 
 @Module({
@@ -58,6 +55,6 @@ import { BidasksStorageModule } from './modules/bidasks-storage/bidasks-storage.
     ApiClustersModule,
     ApiFppModule,
   ],
-  providers: [AppService, BidasksConsumer],
+  providers: [AppService],
 })
 export class AppModule {}

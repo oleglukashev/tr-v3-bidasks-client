@@ -10,9 +10,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ClustersEntityService } from '../../../entity-services/clusters-entity-service';
-import { getCluster, getClusterKeyByPairIdTsTf } from '../../../../utils/redis';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
+import { BidasksStorageService } from '../../../bidasks-storage/bidasks-storage.service';
 
 @ApiTags('Products')
 @ApiBearerAuth()
@@ -20,7 +18,7 @@ import Redis from 'ioredis';
 export class ApiClustersController {
   constructor(
     private readonly clustersEntityService: ClustersEntityService,
-    @InjectRedis('bidasksDb') private readonly redis: Redis,
+    private readonly bidasksStorageService: BidasksStorageService,
   ) {}
 
   @Get('')
@@ -60,11 +58,14 @@ export class ApiClustersController {
     });
 
     if (!Object.keys(cluster.data).length) {
-      const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, ts);
-      const redisItem: any = await getCluster(clusterKey, this.redis);
+      const storageBidask = this.bidasksStorageService.getBidask(
+        pairId,
+        tf,
+        ts,
+      );
 
-      if (redisItem) {
-        cluster = redisItem;
+      if (storageBidask) {
+        cluster = storageBidask;
       } else {
         throw new NotFoundException('Cluster not found');
       }

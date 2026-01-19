@@ -11,15 +11,9 @@ import { Readable } from 'stream';
 //const MIN_INTERVAL = 60000;
 
 import { CommandRunner, Command, Option } from 'nest-commander';
-import { InjectRedis } from '@nestjs-modules/ioredis';
-import Redis from 'ioredis';
 import { ClustersEntityService } from '../modules/entity-services/clusters-entity-service';
 import { getStartTsByTf, startOfMinuteTs } from '../utils/time';
-import {
-  getCluster,
-  getClusterKeyByPairIdTsTf,
-  saveCluster,
-} from '../utils/redis';
+import { BidasksStorageService } from '../modules/bidasks-storage/bidasks-storage.service';
 
 // @Injectable()
 @Command({
@@ -29,7 +23,7 @@ import {
 })
 export class GrabTradesCommand extends CommandRunner {
   constructor(
-    @InjectRedis('bidasksDb') private readonly redis: Redis,
+    private readonly bidasksStorageService: BidasksStorageService,
     private readonly clustersEntityService: ClustersEntityService,
   ) {
     super();
@@ -75,19 +69,7 @@ export class GrabTradesCommand extends CommandRunner {
       if (symbol !== options.symbol) {
         continue;
       }
-      // for (const tf of tradingServiceData.timeframes) {
-      //   if (tf === '1m') {
-      //     continue;
-      //   }
-      //   await this.grablinesProcess({
-      //     exchange,
-      //     pairId: parseInt(pairIdBySymbol[symbol]),
-      //     symbol,
-      //     tf,
-      //     startTs: options.startTs,
-      //     endTs: options.endTs,
-      //   });
-      // }
+
       await this.fetchAndSave({
         pairId: parseInt(pairIdBySymbol[symbol]),
         symbol,
@@ -130,7 +112,12 @@ export class GrabTradesCommand extends CommandRunner {
                 tfAsString
               ];
             const data: any = this.prepareTrade(trade);
-            await this.processTrade(data, tf, pairId, this.redis, clusterSize);
+            this.bidasksStorageService.processTrade(
+              data,
+              tf,
+              pairId,
+              clusterSize,
+            );
           }
         }
 
@@ -141,64 +128,6 @@ export class GrabTradesCommand extends CommandRunner {
         moment().format('HH:mm.ss'),
       );
       await this.moveDataFromRedisToBd(pairId, date);
-    }
-  }
-
-  async processTrade(trade, tf, pairId, redis, clusterSize) {
-    const startTs = getStartTsByTf(trade.timestamp, tf);
-    const priceCluster = this.clustersEntityService.getPriceCluster(
-      trade,
-      clusterSize,
-    );
-    // if no startTs in clusters clear this tf clusters and create new cluster
-    // if (!this.clusters[pairId][tf]?.[startTs]) {
-    const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, startTs);
-    let cluster: any = await getCluster(clusterKey, redis);
-
-    if (!cluster) {
-      cluster = {
-        data: {},
-        ts: startTs,
-        pairId: parseInt(pairId),
-        tf: tf,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        v: 0,
-      };
-
-      await saveCluster(clusterKey, cluster, redis);
-    }
-
-    if (!cluster.data?.[priceCluster]) {
-      cluster.data[priceCluster] =
-        this.clustersEntityService.getDefaultClusterData(priceCluster);
-    }
-
-    const priceClusterData: any =
-      this.clustersEntityService.updatePriceClusterData(
-        cluster.data[priceCluster],
-        trade,
-      );
-
-    const tradeVolume = trade.amount;
-    cluster.v += parseInt(tradeVolume);
-    cluster.data[priceCluster] = priceClusterData;
-
-    try {
-      // await this.clustersEntityService.baseUpdate(
-      //   this.clusters[pairId][tf][startTs].id,
-      //   {
-      //     v: this.clusters[pairId][tf][startTs].v,
-      //     data: this.clusters[pairId][tf][startTs].data,
-      //   },
-      // );
-      await saveCluster(clusterKey, cluster, redis);
-      // await this.redis.hmset(
-      //   `clusters:${pairId}:${tf}:${startTs}`,
-      //   JSON.stringify(cluster),
-      // );
-    } catch (e) {
-      console.log(e);
     }
   }
 
@@ -282,57 +211,40 @@ export class GrabTradesCommand extends CommandRunner {
       // );
 
       if (minuteUtc === getStartTsByTf(minuteUtc, 5)) {
-        await this.moveClusterFromRedisToBdByTf(5, minuteUtc, pairId);
+        await this.moveBidasksFromStorageToBdByTf(5, minuteUtc, pairId);
       }
 
       if (minuteUtc === getStartTsByTf(minuteUtc, 15)) {
-        await this.moveClusterFromRedisToBdByTf(15, minuteUtc, pairId);
+        await this.moveBidasksFromStorageToBdByTf(15, minuteUtc, pairId);
       }
 
       if (minuteUtc === getStartTsByTf(minuteUtc, 30)) {
-        await this.moveClusterFromRedisToBdByTf(30, minuteUtc, pairId);
+        await this.moveBidasksFromStorageToBdByTf(30, minuteUtc, pairId);
       }
 
       if (minuteUtc === getStartTsByTf(minuteUtc, 60)) {
-        await this.moveClusterFromRedisToBdByTf(60, minuteUtc, pairId);
+        await this.moveBidasksFromStorageToBdByTf(60, minuteUtc, pairId);
       }
 
       if (minuteUtc === getStartTsByTf(minuteUtc, 240)) {
-        await this.moveClusterFromRedisToBdByTf(240, minuteUtc, pairId);
+        await this.moveBidasksFromStorageToBdByTf(240, minuteUtc, pairId);
       }
     }
   }
 
-  async moveClusterFromRedisToBdByTf(
+  async moveBidasksFromStorageToBdByTf(
     tf: number,
-    startTs: number,
+    minuteUtc: number,
     pairId: number,
   ) {
-    const clusterKey = getClusterKeyByPairIdTsTf(pairId, tf, startTs);
-    const redisItem: any = await getCluster(clusterKey, this.redis);
+    let storageBidasks = this.bidasksStorageService.finished(tf, minuteUtc);
+    storageBidasks = storageBidasks.filter(
+      (bidask) => bidask.pairId === pairId,
+    );
 
-    if (redisItem) {
-      const cluster = await this.clustersEntityService.findFirst({
-        where: {
-          ts: { equals: startTs },
-          tf: { equals: tf },
-          pairId: { equals: pairId },
-        },
-      });
-
-      if (cluster) {
-        await this.clustersEntityService.baseUpdate(cluster.id, {
-          ...redisItem,
-          id: undefined,
-        });
-      } else {
-        await this.clustersEntityService.baseCreate({
-          ...redisItem,
-          id: undefined,
-        });
-      }
-
-      await this.redis.del(clusterKey);
+    for (const bidask of storageBidasks) {
+      await this.clustersEntityService.createOrUpdateBidask(bidask);
+      this.bidasksStorageService.deleteByBidask(bidask);
     }
   }
 }

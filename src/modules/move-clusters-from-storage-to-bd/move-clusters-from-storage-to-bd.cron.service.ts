@@ -12,26 +12,26 @@ export class MoveClustersFromStorageToBdCronService {
   @Cron('* * * * *')
   async handleEveryMinuteCron() {
     const now = startOfMinuteTs();
-    await this.clustersEntityService.moveClusterFromRedisToBdByTf(1);
+    await this.clustersEntityService.moveBidasksFromStorageToBdByTf(1);
 
     if (now === getStartTsByTf(now, 5)) {
-      await this.clustersEntityService.moveClusterFromRedisToBdByTf(5);
+      await this.clustersEntityService.moveBidasksFromStorageToBdByTf(5);
     }
 
     if (now === getStartTsByTf(now, 15)) {
-      await this.clustersEntityService.moveClusterFromRedisToBdByTf(15);
+      await this.clustersEntityService.moveBidasksFromStorageToBdByTf(15);
     }
 
     if (now === getStartTsByTf(now, 30)) {
-      await this.clustersEntityService.moveClusterFromRedisToBdByTf(30);
+      await this.clustersEntityService.moveBidasksFromStorageToBdByTf(30);
     }
 
     if (now === getStartTsByTf(now, 60)) {
-      await this.clustersEntityService.moveClusterFromRedisToBdByTf(60);
+      await this.clustersEntityService.moveBidasksFromStorageToBdByTf(60);
     }
 
     if (now === getStartTsByTf(now, 240)) {
-      await this.clustersEntityService.moveClusterFromRedisToBdByTf(240);
+      await this.clustersEntityService.moveBidasksFromStorageToBdByTf(240);
     }
   }
 }
