@@ -61,6 +61,7 @@ export class BidasksStorageService {
         ts: startTs,
         pairId,
         tf,
+        v: 0,
       };
     }
 
