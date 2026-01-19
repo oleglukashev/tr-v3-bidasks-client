@@ -1,3 +1,13 @@
+export const KLINE_TS_SIZE_BY_TF = {
+  1: 60000,
+  5: 300000,
+  15: 900000,
+  30: 1800000,
+  60: 3600000,
+  240: 14400000,
+  1440: 86400000,
+};
+
 function sortByPrice(array: any[], asc = true): any {
   return [...array].sort((a: any, b: any) => {
     return asc

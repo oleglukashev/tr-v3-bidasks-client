@@ -8,6 +8,8 @@ import sentToBot from './utils/bot';
 import { PairsEntityService } from './modules/entity-services/pairs-entity-service';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { BidasksStorageService } from './modules/bidasks-storage/bidasks-storage.service';
+import { getStartTsByTf } from './utils/time';
 
 @Injectable()
 export class AppService {
@@ -15,6 +17,7 @@ export class AppService {
     @InjectQueue('bidasks') private bidasksQueue: Queue,
     private readonly clustersEntityService: ClustersEntityService,
     private readonly pairsEntityService: PairsEntityService,
+    private readonly bidasksStorageService: BidasksStorageService,
   ) {}
 
   async init(): Promise<any> {
@@ -79,16 +82,17 @@ export class AppService {
           const clusterSize = pair.clusterPrecision[tfAsString];
 
           for (const trade of trades) {
-            await this.bidasksQueue.add(
-              'tradeProcess',
-              {
-                trade,
-                tf,
-                pairId,
-                clusterSize,
-              },
-              { removeOnComplete: true, removeOnFail: true },
-            );
+            this.bidasksStorageService.add(trade);
+            // await this.bidasksQueue.add(
+            //   'tradeProcess',
+            //   {
+            //     trade,
+            //     tf,
+            //     pairId,
+            //     clusterSize,
+            //   },
+            //   { removeOnComplete: true, removeOnFail: true },
+            // );
           }
         }
       }

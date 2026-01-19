@@ -4,7 +4,7 @@ import { getStartTsByTf, startOfMinuteTs } from '../../utils/time';
 import { ClustersEntityService } from '../entity-services/clusters-entity-service';
 
 @Injectable()
-export class MoveClustersFromRedisToBdCronService {
+export class MoveClustersFromStorageToBdCronService {
   constructor(
     private readonly clustersEntityService: ClustersEntityService,
   ) {}
