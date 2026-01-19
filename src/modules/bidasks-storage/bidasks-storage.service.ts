@@ -66,25 +66,29 @@ export class BidasksStorageService {
     }
 
     if (!cluster.data?.[priceCluster]) {
-      let minPrice = 0;
-      let maxPrice = 0;
+      const pricesCluster: any[] = Object.keys(cluster.data);
+      if (pricesCluster.length > 0) {
+        let minPrice = pricesCluster[0].p;
+        let maxPrice = pricesCluster[0].p;
 
-      for (const price in cluster.data) {
-        if (parseFloat(price) < minPrice) {
-          minPrice = parseFloat(price);
+        for (const price in cluster.data) {
+          if (parseFloat(price) < parseFloat(minPrice)) {
+            minPrice = price;
+          }
+          if (parseFloat(price) > parseFloat(maxPrice)) {
+            maxPrice = price;
+          }
         }
-        if (parseFloat(price) > maxPrice) {
-          maxPrice = parseFloat(price);
+
+        let currPrice = minPrice;
+        while (parseFloat(currPrice) <= parseFloat(maxPrice)) {
+          if (!cluster.data?.[currPrice]) {
+            cluster.data[currPrice] = getDefaultClusterData(priceCluster);
+          }
+          currPrice += clusterSize;
         }
       }
 
-      let currPrice = minPrice;
-      while (currPrice <= maxPrice) {
-        if (!cluster.data?.[currPrice]) {
-          cluster.data[currPrice] = getDefaultClusterData(priceCluster);
-        }
-        currPrice += clusterSize;
-      }
 
       cluster.data[priceCluster] = getDefaultClusterData(priceCluster);
     }
