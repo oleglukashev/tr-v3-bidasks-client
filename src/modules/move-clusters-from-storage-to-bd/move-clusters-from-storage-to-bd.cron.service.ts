@@ -5,9 +5,7 @@ import { ClustersEntityService } from '../entity-services/clusters-entity-servic
 
 @Injectable()
 export class MoveClustersFromStorageToBdCronService {
-  constructor(
-    private readonly clustersEntityService: ClustersEntityService,
-  ) {}
+  constructor(private readonly clustersEntityService: ClustersEntityService) {}
 
   @Cron('* * * * *')
   async handleEveryMinuteCron() {

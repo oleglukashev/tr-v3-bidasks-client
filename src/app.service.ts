@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import yargs from 'yargs';
-import { ClustersEntityService } from './modules/entity-services/clusters-entity-service';
 import config from './config/config.json';
 import ccxt from 'ccxt';
 import * as process from 'node:process';
