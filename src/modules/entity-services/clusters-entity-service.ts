@@ -34,6 +34,7 @@ export class ClustersEntityService extends Base {
       await this.baseCreate(bidask);
     } catch (e: any) {
       console.log('createOrUpdateBidask error', e, e.code);
+      console.log('bidask', bidask);
       if (e.code === 'P2002') {
         const existBidask = await this.findFirst({
           where: {
