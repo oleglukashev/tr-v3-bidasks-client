@@ -87,14 +87,16 @@ export class BidasksStorageService {
         let currPrice = minPrice;
         while (parseFloat(currPrice) <= parseFloat(maxPrice)) {
           if (!cluster.data?.[currPrice]) {
-            cluster.data[currPrice] = getDefaultClusterData(priceCluster);
+            cluster.data[currPrice] = getDefaultClusterData(currPrice);
           }
           currPrice = Number(new Decimal(currPrice).plus(clusterSize));
           console.log('currPrice', currPrice);
         }
       }
 
-      cluster.data[priceCluster] = getDefaultClusterData(priceCluster);
+      if (!cluster.data[priceCluster]) {
+        cluster.data[priceCluster] = getDefaultClusterData(priceCluster);
+      }
     }
 
     const priceClusterData: any = this.updatePriceClusterData(
