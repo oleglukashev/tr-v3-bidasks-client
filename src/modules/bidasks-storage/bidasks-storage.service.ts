@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { getStartTsByTf, nowTs } from '../../utils/time';
 import { getDefaultClusterData, getPriceCluster } from '../../utils/cluster';
 import { KLINE_TS_SIZE_BY_TF } from '../../utils/kline';
+import { Decimal } from 'decimal.js';
 
 @Injectable()
 export class BidasksStorageService {
@@ -68,8 +69,8 @@ export class BidasksStorageService {
     if (!cluster.data?.[priceCluster]) {
       const pricesCluster: any[] = Object.keys(cluster.data);
       if (pricesCluster.length > 0) {
-        let minPrice = pricesCluster[0].p;
-        let maxPrice = pricesCluster[0].p;
+        let minPrice = pricesCluster[0];
+        let maxPrice = pricesCluster[0];
 
         for (const price in cluster.data) {
           if (parseFloat(price) < parseFloat(minPrice)) {
@@ -80,15 +81,18 @@ export class BidasksStorageService {
           }
         }
 
+        console.log('minPrice', minPrice);
+        console.log('maxPrice', maxPrice);
+
         let currPrice = minPrice;
         while (parseFloat(currPrice) <= parseFloat(maxPrice)) {
           if (!cluster.data?.[currPrice]) {
             cluster.data[currPrice] = getDefaultClusterData(priceCluster);
           }
-          currPrice += clusterSize;
+          currPrice = Number(new Decimal(currPrice).plus(clusterSize));
+          console.log('currPrice', currPrice);
         }
       }
-
 
       cluster.data[priceCluster] = getDefaultClusterData(priceCluster);
     }
