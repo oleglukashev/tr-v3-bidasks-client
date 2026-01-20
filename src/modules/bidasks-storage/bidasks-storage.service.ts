@@ -81,16 +81,12 @@ export class BidasksStorageService {
           }
         }
 
-        console.log('minPrice', minPrice);
-        console.log('maxPrice', maxPrice);
-
         let currPrice = minPrice;
         while (parseFloat(currPrice) <= parseFloat(maxPrice)) {
           if (!cluster.data?.[currPrice]) {
             cluster.data[currPrice] = getDefaultClusterData(currPrice);
           }
           currPrice = Number(new Decimal(currPrice).plus(clusterSize));
-          console.log('currPrice', currPrice);
         }
       }
 
