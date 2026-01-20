@@ -4,6 +4,7 @@ import { GrabTradesCommand } from './commands/grab-trades.command';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.module';
 import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
+import { BidasksStorageModule } from './modules/bidasks-storage/bidasks-storage.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.modul
       },
       'bidasksDb',
     ),
+    BidasksStorageModule,
     EntityModule,
   ],
   providers: [GrabTradesCommand],
