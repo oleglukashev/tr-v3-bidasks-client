@@ -65,7 +65,15 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
 
     ws.on('message', (msg) => this.handleMessage(ws, msg));
     ws.on('close', () => {
-      this.bidaskSubscriptions.delete(connectionId);
+      try {
+        this.bidaskSubscriptions.delete(connectionId);
+      } catch (e) {}
+      try {
+        this.bidaskSubscriptionsByPairId.delete(connectionId);
+      } catch (e) {}
+      try {
+        this.bidaskSubscriptionsByPairIdAndTf.delete(connectionId);
+      } catch (e) {}
       this.logger.log(`Client disconnected: ${connectionId}`);
     });
   }
@@ -74,7 +82,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
     try {
       const data = JSON.parse(msg.toString());
       if (
-        data.type === 'subscribeBidaskByPairIdAndTf' &&
+        data.type === 'subscribeBidasksByPairIdAndTf' &&
         data.pairId &&
         data.tf
       ) {
@@ -88,7 +96,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
           `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
         );
       } else if (
-        data.type === 'subscribeBidaskByPairId' &&
+        data.type === 'subscribeBidasksByPairId' &&
         data.pairId &&
         data.tf
       ) {
@@ -101,7 +109,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(
           `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
         );
-      } else if (data.type === 'subscribeBidask') {
+      } else if (data.type === 'subscribeBidasks') {
         const connectionId = (ws as any).id;
         this.bidaskSubscriptions.set(connectionId, {
           ws,
