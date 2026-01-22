@@ -15,6 +15,7 @@ import { ExpressAdapter } from '@bull-board/express';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullModule } from '@nestjs/bullmq';
 import { BidasksStorageModule } from './modules/bidasks-storage/bidasks-storage.module';
+import { WebsocketGatewayModule } from './modules/websocket-gateway/websocket-gateway.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { BidasksStorageModule } from './modules/bidasks-storage/bidasks-storage.
     MoveClustersFromStorageToBdModule,
     ApiClustersModule,
     ApiFppModule,
+    WebsocketGatewayModule,
   ],
   providers: [AppService],
 })

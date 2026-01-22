@@ -3,10 +3,13 @@ import { getStartTsByTf, nowTs } from '../../utils/time';
 import { getDefaultClusterData, getPriceCluster } from '../../utils/cluster';
 import { KLINE_TS_SIZE_BY_TF } from '../../utils/kline';
 import { Decimal } from 'decimal.js';
+import { WebsocketStreamService } from '../websocket-gateway/websocket-stream.service';
 
 @Injectable()
 export class BidasksStorageService {
   private readonly store = new Map<string, Record<string, any>>();
+
+  constructor(private readonly websocketStream: WebsocketStreamService) {}
 
   setBidask(
     pairId: number,
@@ -105,6 +108,14 @@ export class BidasksStorageService {
     cluster.data[priceCluster] = priceClusterData;
 
     this.setBidask(pairId, tf, startTs, cluster);
+
+    this.websocketStream.emitBidask({
+      pairId,
+      tf,
+      ts: startTs,
+      data: cluster.data,
+      v: cluster.v,
+    });
   }
 
   private buildKey(pairId: number, tf: number, ts: number): string {
