@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import WebSocket, { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -15,7 +20,18 @@ type WsBidaskSubscription = {
 @Injectable()
 export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(WebsocketGatewayService.name);
-  private readonly bidaskSubscriptions = new Map<string, WsBidaskSubscription>();
+  private readonly bidaskSubscriptions = new Map<
+    string,
+    WsBidaskSubscription
+  >();
+  private readonly bidaskSubscriptionsByPairId = new Map<
+    string,
+    WsBidaskSubscription
+  >();
+  private readonly bidaskSubscriptionsByPairIdAndTf = new Map<
+    string,
+    WsBidaskSubscription
+  >();
   private wss?: WebSocketServer;
   private unsubscribeBidask?: () => void;
 
@@ -57,14 +73,44 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
   private handleMessage(ws: WebSocket, msg: WebSocket.RawData) {
     try {
       const data = JSON.parse(msg.toString());
-      if (data.type === 'subscribeBidask' && data.pairId && data.tf) {
+      if (
+        data.type === 'subscribeBidaskByPairIdAndTf' &&
+        data.pairId &&
+        data.tf
+      ) {
+        const connectionId = (ws as any).id;
+        this.bidaskSubscriptionsByPairIdAndTf.set(connectionId, {
+          ws,
+          tf: data.tf,
+          pairId: data.pairId,
+        });
+        this.logger.log(
+          `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
+        );
+      } else if (
+        data.type === 'subscribeBidaskByPairId' &&
+        data.pairId &&
+        data.tf
+      ) {
+        const connectionId = (ws as any).id;
+        this.bidaskSubscriptionsByPairId.set(connectionId, {
+          ws,
+          tf: data.tf,
+          pairId: data.pairId,
+        });
+        this.logger.log(
+          `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
+        );
+      } else if (data.type === 'subscribeBidask') {
         const connectionId = (ws as any).id;
         this.bidaskSubscriptions.set(connectionId, {
           ws,
           tf: data.tf,
           pairId: data.pairId,
         });
-        this.logger.log(`Client subscribed to bidask: ${data.pairId} @ ${data.tf}`);
+        this.logger.log(
+          `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
+        );
       }
     } catch (error) {
       this.logger.error('Failed to parse WebSocket message.', error as Error);
@@ -74,6 +120,49 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
   private broadcastBidask(payload: BidaskStreamPayload) {
     const subscriptions = Array.from(this.bidaskSubscriptions.values());
     for (const wsData of subscriptions) {
+      if (wsData.ws.readyState === WebSocket.OPEN) {
+        wsData.ws.send(
+          JSON.stringify({
+            type: 'bidask',
+            data: {
+              pairId: payload.pairId,
+              tf: payload.tf,
+              ts: payload.ts.toString(),
+              data: payload.data,
+              v: payload.v,
+            },
+          }),
+        );
+      }
+    }
+
+    const subscriptionsByPairId = Array.from(
+      this.bidaskSubscriptionsByPairId.values(),
+    );
+    for (const wsData of subscriptionsByPairId) {
+      if (
+        wsData.ws.readyState === WebSocket.OPEN &&
+        wsData.pairId === payload.pairId
+      ) {
+        wsData.ws.send(
+          JSON.stringify({
+            type: 'bidask',
+            data: {
+              pairId: payload.pairId,
+              tf: payload.tf,
+              ts: payload.ts.toString(),
+              data: payload.data,
+              v: payload.v,
+            },
+          }),
+        );
+      }
+    }
+
+    const subscriptionsByPairIdAndTf = Array.from(
+      this.bidaskSubscriptionsByPairIdAndTf.values(),
+    );
+    for (const wsData of subscriptionsByPairIdAndTf) {
       if (
         wsData.ws.readyState === WebSocket.OPEN &&
         wsData.tf === payload.tf &&
