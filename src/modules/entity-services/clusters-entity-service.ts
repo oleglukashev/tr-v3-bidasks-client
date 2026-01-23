@@ -33,8 +33,6 @@ export class ClustersEntityService extends Base {
     try {
       await this.baseCreate(bidask);
     } catch (e: any) {
-      console.log('createOrUpdateBidask error', e, e.code);
-      console.log('bidask', bidask);
       if (e.code === 'P2002') {
         const existBidask = await this.findFirst({
           where: {
@@ -43,8 +41,6 @@ export class ClustersEntityService extends Base {
             tf: bidask.tf,
           },
         });
-        console.log('existBidask', existBidask);
-        console.log('bidask', bidask);
         if (existBidask) {
           await this.baseUpdate(existBidask.id, {
             data: bidask.data,
