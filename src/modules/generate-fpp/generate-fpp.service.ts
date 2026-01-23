@@ -71,7 +71,6 @@ export class GenerateFppService {
     // });
 
     if (!cluster1 || !cluster2) {
-      console.log(`${pairId},${tf}: Not enough clusters data`);
       return;
     }
 

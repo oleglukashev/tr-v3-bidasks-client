@@ -18,7 +18,6 @@ export class GenerateFppCronService {
     const tradingServiceData = config[tradingServiceId];
     const now = startOfMinuteTs();
     await sleep(10000);
-    console.log(moment().format('YYYY-MM-DD HH:mm:ss'));
     for (const pairId in tradingServiceData.types.future.tickers) {
       await this.generateFppService.processFpp(parseInt(pairId), 1);
 
