@@ -21,6 +21,10 @@ export class ClustersEntityService extends Base {
   }
 
   async moveBidasksFromStorageToBdByTf(tf: number) {
+    console.log(
+      `${tf} bidasksStorageService size`,
+      this.bidasksStorageService.entries().length,
+    );
     const storageBidasks = this.bidasksStorageService.finished(tf);
 
     for (const bidask of storageBidasks) {
