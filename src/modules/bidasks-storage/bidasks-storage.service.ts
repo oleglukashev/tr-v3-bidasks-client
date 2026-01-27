@@ -109,13 +109,13 @@ export class BidasksStorageService {
 
     this.setBidask(pairId, tf, startTs, cluster);
 
-    this.websocketStream.emitBidask({
-      pairId,
-      tf,
-      ts: startTs,
-      data: cluster.data,
-      v: cluster.v,
-    });
+    // this.websocketStream.emitBidask({
+    //   pairId,
+    //   tf,
+    //   ts: startTs,
+    //   data: cluster.data,
+    //   v: cluster.v,
+    // });
   }
 
   private buildKey(pairId: number, tf: number, ts: number): string {
