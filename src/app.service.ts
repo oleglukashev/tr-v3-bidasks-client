@@ -96,7 +96,7 @@ export class AppService {
     while (true) {
       const bidasks: any[] = this.bidasksStorageService.entries();
       this.websocketStreamService.emitBidasks(bidasks);
-      await sleep(1000);
+      await sleep(2000);
     }
   }
 }
