@@ -179,7 +179,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
         data: bidasks,
       });
       for (const key of this.bidaskSubscriptions.keys()) {
-        const wsData = this.bidaskSubscriptions[key];
+        const wsData = this.bidaskSubscriptions.get(key);
         if (wsData.ws.readyState === WebSocket.OPEN) {
           wsData.ws.send(message);
         }
@@ -188,7 +188,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
 
     if (this.bidaskSubscriptionsByPairId.size > 0) {
       for (const key of this.bidaskSubscriptionsByPairId.keys()) {
-        const wsData = this.bidaskSubscriptionsByPairId[key];
+        const wsData = this.bidaskSubscriptionsByPairId.get(key);
         if (wsData.ws.readyState === WebSocket.OPEN) {
           const message = JSON.stringify({
             type: 'bidasks',
@@ -201,7 +201,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
 
     if (this.bidaskSubscriptionsByPairIdAndTf.size > 0) {
       for (const key of this.bidaskSubscriptionsByPairIdAndTf.keys()) {
-        const wsData = this.bidaskSubscriptionsByPairIdAndTf[key];
+        const wsData = this.bidaskSubscriptionsByPairIdAndTf.get(key);
         if (wsData.ws.readyState === WebSocket.OPEN) {
           const message = JSON.stringify({
             type: 'bidasks',
