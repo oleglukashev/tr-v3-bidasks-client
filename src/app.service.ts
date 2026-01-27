@@ -6,16 +6,20 @@ import * as process from 'node:process';
 import sentToBot from './utils/bot';
 import { PairsEntityService } from './modules/entity-services/pairs-entity-service';
 import { BidasksStorageService } from './modules/bidasks-storage/bidasks-storage.service';
+import sleep from './utils/sleep';
+import { WebsocketStreamService } from './modules/websocket-gateway/websocket-stream.service';
 
 @Injectable()
 export class AppService {
   constructor(
     private readonly pairsEntityService: PairsEntityService,
     private readonly bidasksStorageService: BidasksStorageService,
+    private readonly websocketStreamService: WebsocketStreamService,
   ) {}
 
   async init(): Promise<any> {
     await this.initTradesProcess();
+    this.bidasksStream();
   }
 
   private async initTradesProcess() {
@@ -85,6 +89,14 @@ export class AppService {
           }
         }
       }
+    }
+  }
+
+  private async bidasksStream() {
+    while (true) {
+      const bidasks: any[] = this.bidasksStorageService.entries();
+      this.websocketStreamService.emitBidasks(bidasks);
+      await sleep(1000);
     }
   }
 }

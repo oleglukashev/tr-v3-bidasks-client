@@ -33,7 +33,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
     WsBidaskSubscription
   >();
   private wss?: WebSocketServer;
-  private unsubscribeBidask?: () => void;
+  private unsubscribeBidasks?: () => void;
 
   constructor(private readonly websocketStream: WebsocketStreamService) {}
 
@@ -46,15 +46,15 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
 
     this.wss = new WebSocketServer({ port });
     this.wss.on('connection', (ws) => this.handleConnection(ws));
-    this.unsubscribeBidask = this.websocketStream.onBidask((payload) =>
-      this.broadcastBidask(payload),
+    this.unsubscribeBidasks = this.websocketStream.onBidasks((payload) =>
+      this.broadcastBidasks(payload),
     );
 
     this.logger.log(`WebSocket server listening on ws://localhost:${port}`);
   }
 
   onModuleDestroy() {
-    this.unsubscribeBidask?.();
+    this.unsubscribeBidasks?.();
     this.wss?.close();
   }
 
@@ -125,69 +125,92 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private broadcastBidask(payload: BidaskStreamPayload) {
-    const subscriptions = Array.from(this.bidaskSubscriptions.values());
-    for (const wsData of subscriptions) {
-      if (wsData.ws.readyState === WebSocket.OPEN) {
-        wsData.ws.send(
-          JSON.stringify({
-            type: 'bidask',
-            data: {
-              pairId: payload.pairId,
-              tf: payload.tf,
-              ts: payload.ts.toString(),
-              data: payload.data,
-              v: payload.v,
-            },
-          }),
-        );
+  // private broadcastBidask(payload: BidaskStreamPayload) {
+  //   const message = JSON.stringify({
+  //     type: 'bidask',
+  //     data: {
+  //       pairId: payload.pairId,
+  //       tf: payload.tf,
+  //       ts: payload.ts.toString(),
+  //       data: payload.data,
+  //       v: payload.v,
+  //     },
+  //   });
+  //
+  //   if (this.bidaskSubscriptions.size > 0) {
+  //     for (const key of this.bidaskSubscriptions.keys()) {
+  //       const wsData = this.bidaskSubscriptions[key];
+  //       if (wsData.ws.readyState === WebSocket.OPEN) {
+  //         wsData.ws.send(message);
+  //       }
+  //     }
+  //   }
+  //
+  //   if (this.bidaskSubscriptionsByPairId.size > 0) {
+  //     for (const key of this.bidaskSubscriptionsByPairId.keys()) {
+  //       const wsData = this.bidaskSubscriptionsByPairId[key];
+  //       if (
+  //         wsData.ws.readyState === WebSocket.OPEN &&
+  //         wsData.pairId === payload.pairId
+  //       ) {
+  //         wsData.ws.send(message);
+  //       }
+  //     }
+  //   }
+  //
+  //   if (this.bidaskSubscriptionsByPairIdAndTf.size > 0) {
+  //     for (const key of this.bidaskSubscriptionsByPairIdAndTf.keys()) {
+  //       const wsData = this.bidaskSubscriptionsByPairIdAndTf[key];
+  //       if (
+  //         wsData.ws.readyState === WebSocket.OPEN &&
+  //         wsData.tf === payload.tf &&
+  //         wsData.pairId === payload.pairId
+  //       ) {
+  //         wsData.ws.send(message);
+  //       }
+  //     }
+  //   }
+  // }
+
+  private broadcastBidasks(bidasks: BidaskStreamPayload[]) {
+    if (this.bidaskSubscriptions.size > 0) {
+      const message = JSON.stringify({
+        type: 'bidasks',
+        data: bidasks,
+      });
+      for (const key of this.bidaskSubscriptions.keys()) {
+        const wsData = this.bidaskSubscriptions[key];
+        if (wsData.ws.readyState === WebSocket.OPEN) {
+          wsData.ws.send(message);
+        }
       }
     }
 
-    const subscriptionsByPairId = Array.from(
-      this.bidaskSubscriptionsByPairId.values(),
-    );
-    for (const wsData of subscriptionsByPairId) {
-      if (
-        wsData.ws.readyState === WebSocket.OPEN &&
-        wsData.pairId === payload.pairId
-      ) {
-        wsData.ws.send(
-          JSON.stringify({
-            type: 'bidask',
-            data: {
-              pairId: payload.pairId,
-              tf: payload.tf,
-              ts: payload.ts.toString(),
-              data: payload.data,
-              v: payload.v,
-            },
-          }),
-        );
+    if (this.bidaskSubscriptionsByPairId.size > 0) {
+      for (const key of this.bidaskSubscriptionsByPairId.keys()) {
+        const wsData = this.bidaskSubscriptionsByPairId[key];
+        if (wsData.ws.readyState === WebSocket.OPEN) {
+          const message = JSON.stringify({
+            type: 'bidasks',
+            data: bidasks.filter((item) => item.pairId === wsData.pairId),
+          });
+          wsData.ws.send(message);
+        }
       }
     }
 
-    const subscriptionsByPairIdAndTf = Array.from(
-      this.bidaskSubscriptionsByPairIdAndTf.values(),
-    );
-    for (const wsData of subscriptionsByPairIdAndTf) {
-      if (
-        wsData.ws.readyState === WebSocket.OPEN &&
-        wsData.tf === payload.tf &&
-        wsData.pairId === payload.pairId
-      ) {
-        wsData.ws.send(
-          JSON.stringify({
-            type: 'bidask',
-            data: {
-              pairId: payload.pairId,
-              tf: payload.tf,
-              ts: payload.ts.toString(),
-              data: payload.data,
-              v: payload.v,
-            },
-          }),
-        );
+    if (this.bidaskSubscriptionsByPairIdAndTf.size > 0) {
+      for (const key of this.bidaskSubscriptionsByPairIdAndTf.keys()) {
+        const wsData = this.bidaskSubscriptionsByPairIdAndTf[key];
+        if (wsData.ws.readyState === WebSocket.OPEN) {
+          const message = JSON.stringify({
+            type: 'bidasks',
+            data: bidasks.filter(
+              (item) => item.pairId === wsData.pairId && wsData.tf === item.tf,
+            ),
+          });
+          wsData.ws.send(message);
+        }
       }
     }
   }

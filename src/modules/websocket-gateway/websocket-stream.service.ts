@@ -12,14 +12,14 @@ export type BidaskStreamPayload = {
 @Injectable()
 export class WebsocketStreamService {
   private readonly emitter = new EventEmitter();
-  private readonly bidaskEvent = 'bidask';
+  private readonly bidasksEvent = 'bidasks';
 
-  onBidask(handler: (payload: BidaskStreamPayload) => void): () => void {
-    this.emitter.on(this.bidaskEvent, handler);
-    return () => this.emitter.off(this.bidaskEvent, handler);
+  onBidasks(handler: (payload: BidaskStreamPayload[]) => void): () => void {
+    this.emitter.on(this.bidasksEvent, handler);
+    return () => this.emitter.off(this.bidasksEvent, handler);
   }
 
-  emitBidask(payload: BidaskStreamPayload) {
-    this.emitter.emit(this.bidaskEvent, payload);
+  emitBidasks(payload: BidaskStreamPayload[]) {
+    this.emitter.emit(this.bidasksEvent, payload);
   }
 }

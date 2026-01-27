@@ -7,7 +7,7 @@ import {
   PostInclude,
 } from 'prisma';
 import { GeneralPrismaService } from '../generalPrisma/generalPrisma.service';
-import { KlinesPrismaService } from '../klinesPrisma/klinesPrisma.service';
+//import { KlinesPrismaService } from '../klinesPrisma/klinesPrisma.service';
 import { BidasksPrismaService } from '../bidasksPrisma/bidasksPrisma.service';
 
 interface IFind {
@@ -23,7 +23,7 @@ export class Base {
   constructor(
     prismaService:
       | GeneralPrismaService
-      | KlinesPrismaService
+      //| KlinesPrismaService
       | BidasksPrismaService,
     protected readonly prismaDomain: string,
   ) {
