@@ -24,7 +24,6 @@ export class ClustersEntityService extends Base {
     const storageBidasks = this.bidasksStorageService.finished(tf);
 
     console.log(`${tf} bidasksStorageService size`, storageBidasks.length);
-    console.log(`${tf} bidasksStorageService`, storageBidasks);
 
     for (const bidask of storageBidasks) {
       await this.createOrUpdateBidask(bidask);
