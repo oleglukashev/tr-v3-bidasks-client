@@ -10,7 +10,7 @@ export class MoveClustersFromStorageToBdCronService {
   @Cron('* * * * *')
   async handleEveryMinuteCron() {
     const now = startOfMinuteTs();
-    //await this.clustersEntityService.moveBidasksFromStorageToBdByTf(1);
+    await this.clustersEntityService.moveBidasksFromStorageToBdByTf(1);
 
     if (now === getStartTsByTf(now, 5)) {
       await this.clustersEntityService.moveBidasksFromStorageToBdByTf(5);
