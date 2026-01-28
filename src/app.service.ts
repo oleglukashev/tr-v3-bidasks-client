@@ -66,7 +66,7 @@ export class AppService {
         trades = await exchange.watchTrades(pair.symbol);
       } catch (error: any) {
         console.error('WebSocket connection error:', error.message);
-        console.log('Reconnecting in 2 seconds...');
+        console.log('Reconnecting in 1 second...');
         await sentToBot(
           `bidasks microservice: ${pair.symbol} - ${error.message}`,
         );
@@ -77,6 +77,11 @@ export class AppService {
       if (pair.clusterPrecision) {
         for (const tfAsString in pair.clusterPrecision) {
           const tf = parseInt(tfAsString);
+          // TODO: save 5 minutes only
+          if (tf !== 5) {
+            continue;
+          }
+
           const clusterSize = pair.clusterPrecision[tfAsString];
 
           for (const trade of trades) {
