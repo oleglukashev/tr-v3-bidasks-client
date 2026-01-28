@@ -19,7 +19,7 @@ export class AppService {
 
   async init(): Promise<any> {
     await this.initTradesProcess();
-    //this.bidasksStream();
+    this.bidasksStream();
   }
 
   private async initTradesProcess() {
