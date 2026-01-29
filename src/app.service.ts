@@ -64,6 +64,7 @@ export class AppService {
       try {
         // Получаем данные по тикеру через WebSocket
         trades = await exchange.watchTrades(pair.symbol);
+        console.log(`got trades ${trades.length}`);
       } catch (error: any) {
         console.error('WebSocket connection error:', error.message);
         console.log('Reconnecting in 1 second...');
