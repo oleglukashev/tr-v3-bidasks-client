@@ -10,6 +10,7 @@ import {
   BidaskStreamPayload,
   WebsocketStreamService,
 } from './websocket-stream.service';
+import { BidasksStorageService } from '../bidasks-storage/bidasks-storage.service';
 
 type WsBidaskSubscription = {
   ws: WebSocket;
@@ -35,7 +36,10 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
   private wss?: WebSocketServer;
   private unsubscribeBidasks?: () => void;
 
-  constructor(private readonly websocketStream: WebsocketStreamService) {}
+  constructor(
+    private readonly websocketStream: WebsocketStreamService,
+    private readonly bidasksStorageService: BidasksStorageService,
+  ) {}
 
   onModuleInit() {
     const port = Number(process.env.WS_PORT);
@@ -81,6 +85,26 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
   private handleMessage(ws: WebSocket, msg: WebSocket.RawData) {
     try {
       const data = JSON.parse(msg.toString());
+      if (data?.type === 'subscribeBidasksClient') {
+        (ws as any).isBidasksClient = true;
+        ws.send(JSON.stringify({ approved: true }));
+        this.logger.log('Bidasks client subscribed');
+        return;
+      }
+
+      if ((ws as any).isBidasksClient) {
+        const bidasks = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+            ? data.data
+            : null;
+
+        if (bidasks) {
+          this.bidasksStorageService.setBidasks(bidasks);
+          this.broadcastBidasks(bidasks);
+        }
+        return;
+      }
       if (
         data.type === 'subscribeBidasksByPairIdAndTf' &&
         data.pairId &&
