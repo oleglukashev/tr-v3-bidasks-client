@@ -58,10 +58,9 @@ export class ApiClustersController {
     });
 
     if (!cluster || !Object.keys(cluster.data).length) {
-      const storageBidask = this.bidasksStorageService.getBidask(
-        pairId,
-        tf,
-        ts,
+      const storageBidasks = this.bidasksStorageService.getBidasks();
+      const storageBidask = storageBidasks.find(
+        (item) => item.pairId === pairId && item.tf === tf,
       );
 
       if (storageBidask) {
