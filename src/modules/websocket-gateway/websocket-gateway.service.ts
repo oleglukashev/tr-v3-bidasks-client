@@ -11,6 +11,7 @@ import {
   WebsocketStreamService,
 } from './websocket-stream.service';
 import { BidasksStorageService } from '../bidasks-storage/bidasks-storage.service';
+import { ClustersEntityService } from '../entity-services/clusters-entity-service';
 
 type WsBidaskSubscription = {
   ws: WebSocket;
@@ -25,21 +26,22 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
     string,
     WsBidaskSubscription
   >();
-  private readonly bidaskSubscriptionsByPairId = new Map<
-    string,
-    WsBidaskSubscription
-  >();
-  private readonly bidaskSubscriptionsByPairIdAndTf = new Map<
-    string,
-    WsBidaskSubscription
-  >();
+  // private readonly bidaskSubscriptionsByPairId = new Map<
+  //   string,
+  //   WsBidaskSubscription
+  // >();
+  // private readonly bidaskSubscriptionsByPairIdAndTf = new Map<
+  //   string,
+  //   WsBidaskSubscription
+  // >();
   private wss?: WebSocketServer;
   private unsubscribeBidasks?: () => void;
 
   constructor(
     private readonly websocketStream: WebsocketStreamService,
-    private readonly bidasksStorageService: BidasksStorageService,
-  ) {}
+  ) // private readonly clustersEntityService: ClustersEntityService,
+  // private readonly bidasksStorageService: BidasksStorageService,
+  {}
 
   onModuleInit() {
     const port = Number(process.env.WS_PORT);
@@ -72,12 +74,12 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
       try {
         this.bidaskSubscriptions.delete(connectionId);
       } catch (e) {}
-      try {
-        this.bidaskSubscriptionsByPairId.delete(connectionId);
-      } catch (e) {}
-      try {
-        this.bidaskSubscriptionsByPairIdAndTf.delete(connectionId);
-      } catch (e) {}
+      // try {
+      //   this.bidaskSubscriptionsByPairId.delete(connectionId);
+      // } catch (e) {}
+      // try {
+      //   this.bidaskSubscriptionsByPairIdAndTf.delete(connectionId);
+      // } catch (e) {}
       this.logger.log(`Client disconnected: ${connectionId}`);
     });
   }
@@ -86,54 +88,56 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
     try {
       const data = JSON.parse(msg.toString());
       if (data?.type === 'subscribeBidasksClient') {
-        (ws as any).isBidasksClient = true;
         ws.send(JSON.stringify({ approved: true }));
         this.logger.log('Bidasks client subscribed');
         return;
       }
 
-      if ((ws as any).isBidasksClient) {
+      if (data.type === 'bidasks') {
         const bidasks = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
-            ? data.data
-            : null;
+          ? data.data
+          : null;
 
         if (bidasks) {
-          this.bidasksStorageService.setBidasks(bidasks);
+          //this.bidasksStorageService.setBidasks(bidasks);
+          //await this.clustersEntityService.
           this.broadcastBidasks(bidasks);
         }
         return;
       }
-      if (
-        data.type === 'subscribeBidasksByPairIdAndTf' &&
-        data.pairId &&
-        data.tf
-      ) {
-        const connectionId = (ws as any).id;
-        this.bidaskSubscriptionsByPairIdAndTf.set(connectionId, {
-          ws,
-          tf: data.tf,
-          pairId: data.pairId,
-        });
-        this.logger.log(
-          `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
-        );
-      } else if (
-        data.type === 'subscribeBidasksByPairId' &&
-        data.pairId &&
-        data.tf
-      ) {
-        const connectionId = (ws as any).id;
-        this.bidaskSubscriptionsByPairId.set(connectionId, {
-          ws,
-          tf: data.tf,
-          pairId: data.pairId,
-        });
-        this.logger.log(
-          `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
-        );
-      } else if (data.type === 'subscribeBidasks') {
+      // if (
+      //   data.type === 'subscribeBidasksByPairIdAndTf' &&
+      //   data.pairId &&
+      //   data.tf
+      // ) {
+      //   const connectionId = (ws as any).id;
+      //   this.bidaskSubscriptionsByPairIdAndTf.set(connectionId, {
+      //     ws,
+      //     tf: data.tf,
+      //     pairId: data.pairId,
+      //   });
+      //   this.logger.log(
+      //     `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
+      //   );
+      // } else if (
+      //   data.type === 'subscribeBidasksByPairId' &&
+      //   data.pairId &&
+      //   data.tf
+      // ) {
+      //   const connectionId = (ws as any).id;
+      //   this.bidaskSubscriptionsByPairId.set(connectionId, {
+      //     ws,
+      //     tf: data.tf,
+      //     pairId: data.pairId,
+      //   });
+      //   this.logger.log(
+      //     `Client subscribed to bidask: ${data.pairId} @ ${data.tf}`,
+      //   );
+      // } else
+
+      if (data.type === 'subscribeBidasks') {
         const connectionId = (ws as any).id;
         this.bidaskSubscriptions.set(connectionId, {
           ws,
@@ -210,32 +214,32 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    if (this.bidaskSubscriptionsByPairId.size > 0) {
-      for (const key of this.bidaskSubscriptionsByPairId.keys()) {
-        const wsData = this.bidaskSubscriptionsByPairId.get(key);
-        if (wsData.ws.readyState === WebSocket.OPEN) {
-          const message = JSON.stringify({
-            type: 'bidasks',
-            data: bidasks.filter((item) => item.pairId === wsData.pairId),
-          });
-          wsData.ws.send(message);
-        }
-      }
-    }
-
-    if (this.bidaskSubscriptionsByPairIdAndTf.size > 0) {
-      for (const key of this.bidaskSubscriptionsByPairIdAndTf.keys()) {
-        const wsData = this.bidaskSubscriptionsByPairIdAndTf.get(key);
-        if (wsData.ws.readyState === WebSocket.OPEN) {
-          const message = JSON.stringify({
-            type: 'bidasks',
-            data: bidasks.filter(
-              (item) => item.pairId === wsData.pairId && wsData.tf === item.tf,
-            ),
-          });
-          wsData.ws.send(message);
-        }
-      }
-    }
+    // if (this.bidaskSubscriptionsByPairId.size > 0) {
+    //   for (const key of this.bidaskSubscriptionsByPairId.keys()) {
+    //     const wsData = this.bidaskSubscriptionsByPairId.get(key);
+    //     if (wsData.ws.readyState === WebSocket.OPEN) {
+    //       const message = JSON.stringify({
+    //         type: 'bidasks',
+    //         data: bidasks.filter((item) => item.pairId === wsData.pairId),
+    //       });
+    //       wsData.ws.send(message);
+    //     }
+    //   }
+    // }
+    //
+    // if (this.bidaskSubscriptionsByPairIdAndTf.size > 0) {
+    //   for (const key of this.bidaskSubscriptionsByPairIdAndTf.keys()) {
+    //     const wsData = this.bidaskSubscriptionsByPairIdAndTf.get(key);
+    //     if (wsData.ws.readyState === WebSocket.OPEN) {
+    //       const message = JSON.stringify({
+    //         type: 'bidasks',
+    //         data: bidasks.filter(
+    //           (item) => item.pairId === wsData.pairId && wsData.tf === item.tf,
+    //         ),
+    //       });
+    //       wsData.ws.send(message);
+    //     }
+    //   }
+    // }
   }
 }
