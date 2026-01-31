@@ -5,7 +5,6 @@ import { AppService } from './app.service';
 import { ApiClustersModule } from './modules/api/v1/clusters/clusters.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ApiFppModule } from './modules/api/v1/fpp/fpp.module';
-import { MoveClustersFromStorageToBdModule } from './modules/move-clusters-from-storage-to-bd/move-clusters-from-storage-to-bd.module';
 import { GeneralPrismaModule } from './modules/generalPrisma/generalPrisma.module';
 import { BidasksPrismaModule } from './modules/bidasksPrisma/bidasksPrisma.module';
 import { WebsocketGatewayModule } from './modules/websocket-gateway/websocket-gateway.module';
@@ -18,7 +17,6 @@ import { BidasksStorageModule } from './modules/bidasks-storage/bidasks-storage.
     ConfigModule.forRoot(),
     ScheduleModule.forRoot(),
     EntityModule,
-    MoveClustersFromStorageToBdModule,
     ApiClustersModule,
     ApiFppModule,
     WebsocketGatewayModule,
