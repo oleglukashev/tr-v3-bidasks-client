@@ -4,9 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class BidasksStorageService {
   private readonly store = new Map<string, Record<string, any>>();
 
-  setBidasks(
-    data: Record<string, any>[],
-  ): void {
+  setBidasks(data: Record<string, any>[]): void {
     this.store.set('data', data);
   }
 
