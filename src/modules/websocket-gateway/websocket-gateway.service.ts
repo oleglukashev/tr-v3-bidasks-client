@@ -94,6 +94,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
       }
 
       if (data.type === 'bidasks') {
+        console.log('got bidasks', data);
         const bidasks = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
