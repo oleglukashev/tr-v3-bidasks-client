@@ -105,7 +105,7 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
           //this.bidasksStorageService.setBidasks(bidasks);
           //await this.clustersEntityService.
           console.log('broadcast bidasks', bidasks);
-          //this.broadcastBidasks(bidasks);
+          this.broadcastBidasks(bidasks);
         }
         return;
       }

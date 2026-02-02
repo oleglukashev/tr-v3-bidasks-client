@@ -11,7 +11,7 @@ export class AppService {
   ) {}
 
   async init(): Promise<any> {
-    this.bidasksStream();
+    //this.bidasksStream();
   }
 
   private async bidasksStream() {
