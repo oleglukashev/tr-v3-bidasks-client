@@ -208,9 +208,11 @@ export class WebsocketGatewayService implements OnModuleInit, OnModuleDestroy {
         type: 'bidasks',
         data: bidasks,
       });
+      console.log('keys', this.bidaskSubscriptions.keys());
       for (const key of this.bidaskSubscriptions.keys()) {
         const wsData = this.bidaskSubscriptions.get(key);
         if (wsData.ws.readyState === WebSocket.OPEN) {
+          console.log()
           wsData.ws.send(message);
         }
       }
