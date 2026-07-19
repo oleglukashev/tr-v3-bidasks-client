@@ -1,73 +1,70 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# tr-v3-bidasks trade relay
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Тонкий CCXT-Pro релей трейдов в upstream WS `tr-v3-bidasks` — источник для построения
+bid/ask-кластеров и xv-range баров (+ footprint). Организован по образцу `tr-v3-orderbooks-client`:
+конфиг + позиционные аргументы + PM2, запуск набором по бирже × набору монет.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Собирает трейды (`watchTrades` / `watchTradesForSymbols`) и шлёт каждый батч как
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
-
-```bash
-$ yarn install
+```json
+{ "type": "trades", "data": { "pairId": 123, "tradingServiceId": 2,
+  "trades": [{ "ts": 1710000000000, "price": 0.12, "amount": 1000, "side": "buy" }] } }
 ```
 
-## Running the app
+после хендшейка `{ "type": "subscribeTradeClients" }` → ждём `{ "subscription": true }`.
+xv-range и cluster строит сервер `tr-v3-bidasks`, релей их не считает.
+
+## Конфиг
+
+`configs/base.json` (или путь в `BIDASKS_CLIENT_CONFIG`):
+- `upstream.wsUrl` — WS-вход сервера bidasks (env `BIDASKS_UPSTREAM_WS_URL`).
+- `apiUrl` — tr-v3-api, резолв пар: `GET {apiUrl}/exchanges/{tsId}/pairs-by-names?names=...` (env `BIDASKS_API_URL`).
+- `tradingServices` — имя биржи → tradingServiceId.
+- `names` — монеты (`BTCUSDT`, ...).
+- `chunkSize`, `maxStreamsPerConn`, `subscribeDelayMs`.
+
+## Запуск
+
+Два режима шардинга (движок общий, в `index.js`):
 
 ```bash
-# development
-$ yarn run start
+# по бирже × все монеты (рекомендуется, index4.js)
+node index4.js bybit                 # bybit, все монеты (1 multiplexed ws)
+node index4.js bybit,okx             # несколько лёгких multiplex-бирж в одном процессе
+node index4.js phemex 1/3            # phemex, подшард 1 из 3 монет (для тяжёлых single-symbol бирж)
+node index4.js bybit --debug KASUSDT # печать отправляемых трейдов по одной паре
 
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+# по чанку монет × биржи (index.js)
+node index.js 1                      # чанк 1, все биржи
+node index.js 2 bybit,okx            # чанк 2, только bybit и okx
 ```
 
-## Test
+PM2 набором:
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+pm2 start ecosystem.config.js            # все объявленные процессы
+pm2 start ecosystem.config.js --only bybit
 ```
 
-## Support
+## Диагностика одной пары
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+node index2.js <pairId>   # watchTrades по паре: сырой первый ответ биржи + rolling сделки
+node index3.js <pairId>   # минимальный watchTrades (side/price/amount)
+```
 
-## Stay in touch
+## Структура
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Плоский plain-JS релей (как `tr-v3-orderbooks-client`), без NestJS:
+`index.js` (движок + чанк-режим), `index4.js` (exchange-sharded), `index2.js`/`index3.js`
+(диагностика), `configs/base.json`, `ecosystem.config.js`.
 
-## License
+## Env
 
-Nest is [MIT licensed](LICENSE).
+`BIDASKS_CLIENT_CONFIG`, `BIDASKS_API_URL`, `BIDASKS_UPSTREAM_WS_URL`, `UPSTREAM_RECONNECT_MS`,
+`CHUNK`, `TRADING_SERVICES`, `EXCHANGE`, `SUBSHARD`, `MAX_STREAMS_PER_CONN`, `SUBSCRIBE_DELAY_MS`,
+`BIDASKS_DEBUG`.
+
+## Зависимости
+
+`ccxt` и `ws` уже в `package.json`. Перед первым запуском: `yarn install`.
