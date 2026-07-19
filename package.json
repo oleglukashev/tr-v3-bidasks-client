@@ -30,7 +30,10 @@
     "prisma:generate:watch": "npx prisma generate --watch",
     "start:db": "yarn migrate:up && yarn prisma:generate && yarn seed",
     "seed": "npx prisma db seed",
-    "command-nest": "TS_NODE_PROJECT=./tsconfig.build.json ts-node ./src/cli.ts"
+    "command-nest": "TS_NODE_PROJECT=./tsconfig.build.json ts-node ./src/cli.ts",
+    "relay": "node index.js",
+    "relay:exchange": "node index4.js",
+    "relay:pm2": "pm2 start ecosystem.config.js"
   },
   "dependencies": {
     "@bull-board/api": "^6.16.2",
