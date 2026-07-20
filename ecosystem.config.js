@@ -20,13 +20,21 @@ const common = {
   },
 };
 
-// bybit — multiplex (watchTradesForSymbols): одно ws-соединение на все монеты.
+// bybit/kucoin — multiplex (watchTradesForSymbols): одно ws-соединение на все монеты.
 // Разбивать на подшарды нужно только для тяжёлых single-symbol бирж (mexc/gate/htx/bingx/phemex).
+//
+// mexc: watchTradesForSymbols НЕ поддерживает — по одному ws на символ (30 монет = 30 сокетов),
+// плюс собственный минимальный интервал подписки 1000мс (см. SUBSCRIBE_DELAY_MS_BY_EXCHANGE
+// в index.js — config subscribeDelayMs его не переопределяет). Одним процессом подписка на все
+// 30 символов заняла бы ~30с, поэтому три подшарда по 10.
 module.exports = {
   apps: [
     { ...common, name: 'bybit', args: 'bybit' },
+    { ...common, name: 'kucoin', args: 'kucoin' },
+    { ...common, name: 'mexc1', args: 'mexc 1/3' },
+    { ...common, name: 'mexc2', args: 'mexc 2/3' },
+    { ...common, name: 'mexc3', args: 'mexc 3/3' },
     // { ...common, name: 'okx', args: 'okx' },
-    // { ...common, name: 'kucoin', args: 'kucoin' },
     // { ...common, name: 'bitget', args: 'bitget' },
     // { ...common, name: 'bingx', args: 'bingx' },
     // { ...common, name: 'phemex1', args: 'phemex 1/3' },
