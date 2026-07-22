@@ -351,6 +351,18 @@ class UpstreamWs {
       console.error('[upstream] send error:', err.message);
     }
   }
+
+  /** Generic { type, data } send для других релеев (напр. all-liquidations.js). */
+  send(type, data) {
+    if (!this.subscribed || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    try {
+      this.ws.send(JSON.stringify({ type, data }));
+    } catch (err) {
+      console.error('[upstream] send error:', err.message);
+    }
+  }
 }
 
 /** Раз в минуту предупреждаем, если по символу давно не было трейдов. */
