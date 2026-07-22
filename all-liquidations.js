@@ -52,6 +52,9 @@ const CCXT_FUTURES_ID = {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const errMsg = (err) => (err && (err.message || err.name)) || String(err) || 'unknown';
 
+// CCXT_RAW_LOG=1 → дампить всё, что приходит по ccxt.pro ws (для диагностики фида ликвидаций).
+const RAW_LOG = !!process.env.CCXT_RAW_LOG;
+
 const RATE_LIMIT_RE = /too frequent|too many|rate ?limit|frequently|\b429\b|\b510\b/i;
 const CONN_ISSUE_RE = /timed out|connection|keepalive|econn|network|socket hang|handshake/i;
 const retryDelay = (msg) =>
@@ -99,6 +102,11 @@ function resolveSymbol(market, rawSymbol) {
 const sideToPosition = (side) =>
   String(side || '').toLowerCase() === 'buy' ? 'up' : 'down';
 
+// Время самой ликвидации — берём внутренний `T` из сырого сообщения bybit (info.T),
+// а не внешний `ts` снапшота. Фолбэк на updatedTime / ccxt-timestamp.
+const liqTs = (liq) =>
+  Number(liq?.info?.T ?? liq?.info?.updatedTime ?? liq?.timestamp);
+
 async function runExchangeLiquidations({ exCfg, upstream }) {
   const exchangeId = exCfg.id;
   const tradingServiceId = exCfg.tradingServiceId;
@@ -115,14 +123,31 @@ async function runExchangeLiquidations({ exCfg, upstream }) {
     return;
   }
 
-  const createExchange = () =>
-    new ExchangeClass({
+  const createExchange = () => {
+    const ex = new ExchangeClass({
       enableRateLimit: true,
       options: {
         defaultType: exCfg.defaultType ?? 'linear',
         ...(exCfg.options ?? {}),
       },
     });
+    // CCXT_RAW_LOG=1 → печатать КАЖДОЕ распарсенное сообщение с биржи (ccxt.pro отдаёт его в
+    // handleMessage: трейды, ликвидации, subscribe-ack, ping/pong и т.д.). Оборачиваем до первого
+    // watch*, т.к. ccxt биндит handleMessage при создании ws-клиента (this.handleMessage.bind).
+    if (RAW_LOG) {
+      const orig = ex.handleMessage.bind(ex);
+      ex.handleMessage = function (client, message) {
+        try {
+          console.log(
+            `[ccxt-raw ${exchangeId}]`,
+            typeof message === 'string' ? message : JSON.stringify(message),
+          );
+        } catch (_) {}
+        return orig(client, message);
+      };
+    }
+    return ex;
+  };
 
   // loadMarkets один раз — резолвим символы, определяем поддержку методов.
   let market = null;
@@ -190,7 +215,7 @@ async function runExchangeLiquidations({ exCfg, upstream }) {
     const position = sideToPosition(liq.side);
     const price = String(liq.price);
     const contracts = Number(liq.contracts);
-    const ts = liq.timestamp;
+    const ts = liqTs(liq);
     if (!Number.isFinite(contracts) || !Number.isFinite(ts)) return;
     const data = { pairId, tradingServiceId, position, price, contracts, ts };
     console.log(`[liq ${exchangeId}]`, JSON.stringify({ symbol: liq.symbol, ...data }));
@@ -213,7 +238,7 @@ async function runExchangeLiquidations({ exCfg, upstream }) {
       let wm = watermark.get(sym);
       if (!wm) { wm = { lastTs: 0, seen: new Set() }; watermark.set(sym, wm); }
       for (const liq of cache) {
-        const ts = Number(liq && liq.timestamp);
+        const ts = liqTs(liq);
         if (!Number.isFinite(ts) || ts < wm.lastTs) continue;
         const key = `${ts}:${liq.price}:${liq.contracts}:${liq.side}`;
         if (ts === wm.lastTs) {
