@@ -29,6 +29,11 @@ const common = {
 // биржи с поддержкой. bybit шлёт allLiquidation по всем символам на одном ws — подшарды не нужны.
 const commonLiq = { ...common, script: 'all-liquidations.js' };
 
+// Sweep-детектор: свой поток трейдов (watchTradesForSymbols/watchTrades), одна агрессивная заявка
+// через >= minLevels уровней = крупный игрок. Пороги — configs/base.json.sweep или env
+// (SWEEP_MIN_LEVELS, SWEEP_MIN_NOTIONAL_USD). Подшарды нужны только тяжёлым single-symbol биржам.
+const commonSweep = { ...common, script: 'all-sweeps.js' };
+
 // bybit/kucoin — multiplex (watchTradesForSymbols): одно ws-соединение на все монеты.
 // Разбивать на подшарды нужно только для тяжёлых single-symbol бирж (mexc/gate/htx/bingx/phemex).
 //
@@ -55,5 +60,12 @@ module.exports = {
     { ...commonLiq, name: 'liq-bybit', args: 'bybit' },
     // { ...commonLiq, name: 'liq-okx', args: 'okx' },
     // { ...commonLiq, name: 'liq-bitget', args: 'bitget' },
+
+    // --- sweeps (all-sweeps.js) ---
+    { ...commonSweep, name: 'sweep-bybit', args: 'bybit' },
+    // { ...commonSweep, name: 'sweep-kucoin', args: 'kucoin' },
+    // { ...commonSweep, name: 'sweep-mexc1', args: 'mexc 1/3' },
+    // { ...commonSweep, name: 'sweep-mexc2', args: 'mexc 2/3' },
+    // { ...commonSweep, name: 'sweep-mexc3', args: 'mexc 3/3' },
   ],
 };

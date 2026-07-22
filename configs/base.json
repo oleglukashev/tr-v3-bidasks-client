@@ -7,6 +7,11 @@
   "chunkSize": 10,
   "maxStreamsPerConn": 90,
   "subscribeDelayMs": 200,
+  "sweep": {
+    "minLevels": 5,
+    "minNotionalUsd": 10000,
+    "joinWindowMs": 0
+  },
   "tradingServices": {
     "mexc": 1,
     "bybit": 2,
