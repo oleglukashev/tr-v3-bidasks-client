@@ -182,22 +182,49 @@ async function runExchangeLiquidations({ exCfg, upstream }) {
     try { old?.close?.()?.catch?.(() => {}); } catch (_) {}
   };
 
-  // Логируем и шлём в upstream каждую ликвидацию. pairId резолвим по символу ликвидации
-  // (watchLiquidationsForSymbols может вернуть разные символы в одном батче).
-  const handleLiquidations = (arr) => {
-    if (!arr || !arr.length) return;
-    for (const liq of arr) {
-      if (!liq) continue;
-      const pairId = pairIdBySymbol.get(liq.symbol);
-      if (pairId == null) continue;
-      const position = sideToPosition(liq.side);
-      const price = String(liq.price);
-      const contracts = Number(liq.contracts);
-      const ts = liq.timestamp;
-      if (!Number.isFinite(contracts) || !Number.isFinite(ts)) continue;
-      const data = { pairId, tradingServiceId, position, price, contracts, ts };
-      console.log(`[liq ${exchangeId}]`, JSON.stringify({ symbol: liq.symbol, ...data }));
-      upstream.send('liquidation', data);
+  // Логируем и шлём в upstream ОДНУ ликвидацию. pairId резолвим по символу ликвидации.
+  const forwardLiq = (liq) => {
+    if (!liq) return;
+    const pairId = pairIdBySymbol.get(liq.symbol);
+    if (pairId == null) return;
+    const position = sideToPosition(liq.side);
+    const price = String(liq.price);
+    const contracts = Number(liq.contracts);
+    const ts = liq.timestamp;
+    if (!Number.isFinite(contracts) || !Number.isFinite(ts)) return;
+    const data = { pairId, tradingServiceId, position, price, contracts, ts };
+    console.log(`[liq ${exchangeId}]`, JSON.stringify({ symbol: liq.symbol, ...data }));
+    upstream.send('liquidation', data);
+  };
+
+  // Почему не берём возвращаемое значение watchLiquidations напрямую: у ccxt newUpdates=true
+  // отдаёт лишь ОДНУ ликвидацию с последнего resolve, а client.resolve без активного ожидателя
+  // просто выбрасывает результат. Значит, если в один 500мс-снапшот allLiquidation по символу
+  // пришла пачка, мы бы забрали только первую. Поэтому вычитываем ВЕСЬ кэш ccxt
+  // (ex.liquidations[symbol], ArrayCache), а не возвращённое значение, с per-symbol водяным знаком
+  // по ts + дедупом на равном ts. Кэш держит все распарсенные записи (лимит 1000).
+  const watermark = new Map(); // symbol -> { lastTs, seen:Set<key> }
+  const drainSymbols = (ex, syms) => {
+    const cacheBySymbol = ex && ex.liquidations;
+    if (!cacheBySymbol) return;
+    for (const sym of syms) {
+      const cache = cacheBySymbol[sym];
+      if (!cache || !cache.length) continue;
+      let wm = watermark.get(sym);
+      if (!wm) { wm = { lastTs: 0, seen: new Set() }; watermark.set(sym, wm); }
+      for (const liq of cache) {
+        const ts = Number(liq && liq.timestamp);
+        if (!Number.isFinite(ts) || ts < wm.lastTs) continue;
+        const key = `${ts}:${liq.price}:${liq.contracts}:${liq.side}`;
+        if (ts === wm.lastTs) {
+          if (wm.seen.has(key)) continue;
+        } else {
+          wm.lastTs = ts;
+          wm.seen.clear();
+        }
+        wm.seen.add(key);
+        forwardLiq(liq);
+      }
     }
   };
 
@@ -209,8 +236,8 @@ async function runExchangeLiquidations({ exCfg, upstream }) {
     while (true) {
       try {
         const ex = ensureExchange();
-        const liqs = await ex.watchLiquidationsForSymbols(symbols, undefined, undefined, liqParams);
-        handleLiquidations(liqs);
+        await ex.watchLiquidationsForSymbols(symbols, undefined, undefined, liqParams);
+        drainSymbols(ex, symbols);
       } catch (err) {
         const msg = errMsg(err);
         console.error(`[${exchangeId}] liquidations: ${msg}`);
@@ -228,8 +255,8 @@ async function runExchangeLiquidations({ exCfg, upstream }) {
     while (true) {
       try {
         const ex = ensureExchange();
-        const liqs = await ex.watchLiquidations(symbol, undefined, undefined, liqParams);
-        handleLiquidations(liqs);
+        await ex.watchLiquidations(symbol, undefined, undefined, liqParams);
+        drainSymbols(ex, [symbol]);
       } catch (err) {
         const msg = errMsg(err);
         console.error(`[${exchangeId}] ${symbol}: ${msg}`);
